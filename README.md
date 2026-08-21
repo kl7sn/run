@@ -55,7 +55,7 @@ Built for people who already use agents daily — and keep losing the thread bet
 
 **Handoff over chat archaeology.** Resume from a bounded `## Handoff` block — not from scrolling yesterday’s transcript.
 
-**Auto with teeth.** `/run auto` keeps ready tasks moving. Design gates go through dual-agent consensus. Irreversible git, product forks, and true ambiguity still hard-stop.
+**Unattended with hard stops.** `/run auto` keeps ready tasks moving. Design gates go through dual-agent consensus. Irreversible git, product forks, and true ambiguity still hard-stop.
 
 **Session sticky.** If the repo is already bound, follow-up “quick fixes” stay inside `/run`. No silent fall-back to ad-hoc coding.
 
