@@ -1,176 +1,152 @@
-# AWP: Feature-Driven Development Pipeline
+# `/run`
 
-A Claude Code skill that automates feature development workflows. AWP unifies feature planning, implementation, and delivery into a single command-line pipeline — propose a feature, create a branch, and let the executor review and implement task groups with your confirmation.
+### Durable execution for coding agents
 
-## Key Concepts
+Agents are good at writing code. They are bad at **remembering where they left off**, **proving work is done**, and **not quietly abandoning the plan**.
 
-- **1 feature = 1 branch = 1 worktree** — clean isolation, unified naming
-- **Configurable base branch** — features branch from current branch by default, merge back to it, then PR to main
-- **Executor reviews before implementing** — presents task summary, waits for your confirmation, then executes
-- **Task groups drive execution** — each `## N. Title` section in tasks.md is an independently reviewable unit
-- **Unified command system** — `awp` is the single entry point for planning, execution, and delivery
+`/run` is a skill protocol for Cursor, Claude Code, and Codex that turns multi-step engineering into a recoverable loop:
 
-## Installation
+**bind a workstream → keep state in Markdown → verify before done → hand off cleanly.**
+
+No control plane. No SaaS. One workspace folder. Optional Obsidian.
+
+<br>
+
+```text
+  ┌─────────────────────────────────────────────────────────────┐
+  │  project          workstream           tasks                │
+  │  01-demo/    →    01.01-hello/    →    T01 · T02 · T03…     │
+  │  project.md       workstream.md        tasks.md             │
+  │                   context.md           Handoff · evidence   │
+  └─────────────────────────────────────────────────────────────┘
+                         ▲
+                         │  .run-state  (session bind in the git repo)
+                         │
+                    your codebase
+```
+
+<br>
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-0a0a0a?style=flat-square)](LICENSE)
+[![Agents](https://img.shields.io/badge/agents-Cursor%20·%20Claude%20·%20Codex-111111?style=flat-square)](#install)
+[![State](https://img.shields.io/badge/state-Markdown%20workspace-222222?style=flat-square)](#workspace)
+[![中文](https://img.shields.io/badge/docs-%E4%B8%AD%E6%96%87-333333?style=flat-square)](README_CN.md)
+
+---
+
+## Positioning
+
+| `/run` is | `/run` is not |
+| --- | --- |
+| A **session-sticky** workflow skill | A hosted agent platform |
+| Durable state in **plain Markdown** | Another issue tracker you must live in |
+| Verification before `done` | “Looks good” vibes |
+| Unattended advance with hard stops | Blind overnight force-push |
+
+Built for people who already use agents daily — and keep losing the thread between chats, tools, and weekends.
+
+---
+
+## Core ideas
+
+**Three layers.** Project → workstream → fine tasks. The workstream is the execution unit; the project is the container.
+
+**Single writer.** Parallel subagents may change code (preferably in worktrees). Only the parent `/run` writes `tasks.md` / `context.md` / `.run-state`.
+
+**Handoff over chat archaeology.** Resume from a bounded `## Handoff` block — not from scrolling yesterday’s transcript.
+
+**Auto with teeth.** `/run auto` keeps ready tasks moving. Design gates go through dual-agent consensus. Irreversible git, product forks, and true ambiguity still hard-stop.
+
+**Session sticky.** If the repo is already bound, follow-up “quick fixes” stay inside `/run`. No silent fall-back to ad-hoc coding.
+
+---
+
+## Install
 
 ```bash
-git clone https://github.com/kl7sn/awp.git .claude/skills/awp
+git clone https://github.com/kl7sn/run.git
+cd run
 ```
 
-```
-awp init
+Symlink the skill into your agent:
+
+| Agent | Command |
+| --- | --- |
+| **Cursor** | `ln -sf "$(pwd)/skills/run" ~/.cursor/skills/run` |
+| **Claude Code** | `ln -sf "$(pwd)/skills/run" ~/.claude/skills/run` |
+| **Codex** | `ln -sf "$(pwd)/skills/run" ~/.codex/skills/run` |
+
+Or use [`install.sh`](install.sh).
+
+Then in a repo: `/run init` → `/run new` → `/run`.
+
+---
+
+## Workspace
+
+State lives in a normal directory. Obsidian is optional.
+
+**Resolution order**
+
+1. `workspace:` in the repo’s `.run-state`
+2. `RUN_WORKSPACE`
+3. `~/run-workspace`
+
+```text
+~/run-workspace/
+└── Projects/
+    └── 01-demo/                 # project  NN-<slug>
+        ├── project.md
+        └── 01.01-hello/         # workstream  NN.MM-<slug>
+            ├── workstream.md
+            ├── tasks.md
+            ├── context.md       # Handoff · Gotchas · decisions · evidence
+            └── spec.md          # optional
 ```
 
-## Workflow
+Minimal sample: [`examples/01-demo/`](examples/01-demo/).  
+Templates: [`templates/`](templates/).
 
-```
-awp explore                              # Think through ideas (optional)
-awp propose "user authentication"        # Design + specs + tasks + auto-create (base: current branch)
-awp propose "auth" --base develop        # Same, but branch from develop
-awp apply auth                           # Execute task groups (review → confirm → implement)
-awp merge auth                           # Rebase + merge to base branch + cleanup
-```
-
-```
-awp propose
-    │
-    ▼
-┌──────────┐
-│  propose  │  Generate proposal, design, specs, tasks
-│  + create │  Auto-create worktree + branch
-└────┬─────┘
-     │
-     ▼
-┌──────────────────────────────────────┐
-│            awp apply (per group)        │
-│                                      │
-│  ┌────────────┐    ┌──────────────┐  │
-│  │  executor   │──▶│    user      │  │
-│  │  reviews    │   │  confirms    │  │
-│  └────────────┘    └──────┬───────┘  │
-│                           │          │
-│                    ┌──────▼───────┐  │
-│                    │   executor   │  │
-│                    │  implements  │  │
-│                    └──────────────┘  │
-│                                      │
-│  repeat for each task group          │
-└──────────────┬───────────────────────┘
-               │ all groups done
-               ▼
-         ┌──────────┐
-         │ awp merge │  Rebase + merge + cleanup
-         └──────────┘
-```
+---
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `awp propose "<description>" [--base <branch>]` | Generate design, specs, and task breakdown |
-| `awp create <feature> [--change <name>] [--base <branch>]` | Create worktree + branch, link to change |
-| `awp apply <feature>` | Execute task groups with review and confirmation |
-| `awp merge <feature>` | Rebase onto base branch, merge, clean up |
-| `awp delete <feature> [--force]` | Discard feature (worktree + branch + state) |
-| `awp status` | Show all features with group progress and status |
-| `awp explore` | Think through ideas before proposing |
-| `awp doctor` | Health check |
-| `awp upgrade` | Pull latest version |
+| | |
+| --- | --- |
+| `/run init` | Create the project container |
+| `/run new` | Nest a workstream under the project |
+| `/run bind` | Rebind this session interactively |
+| `/run` | Advance explore → plan → execute |
+| `/run auto` | Unattended advance |
 
-## Multi-Feature Parallel Development
+Status line (every advancing reply):
 
-Each feature is independent — run as many as you need:
-
-```
-awp status
-
-FEATURE              GROUP    STATUS       BRANCH
--------              -----    ------       ------
-auth-system          1/2      in_progress  auth-system
-payment-flow         2/3      done         payment-flow
-user-profile         1/1      done         user-profile
+```text
+[/run · auto=off · 01-demo/01.01-hello · T01 ready]
 ```
 
-Merge order is up to you. Before merging, AWP rebases onto the feature's base branch. If conflicts arise, resolve them and re-run. After all features are merged, create a PR from the base branch to main.
+Repo index (git root):
 
-## Directory Structure
-
-```
-project-root/
-├── .awp/
-│   └── features/                # Runtime state per feature
-│       └── <feature>/
-│           └── state.json
-├── openspec/
-│   └── changes/                 # Proposals, designs, specs, tasks
-│       └── <change-name>/
-│           ├── proposal.md
-│           ├── design.md
-│           ├── specs/
-│           └── tasks.md
-├── worktrees/                   # Git worktrees (1 per feature)
-│   └── <feature>/
-└── agents/                      # Agent prompt templates
-    └── executor/
-        └── prompt.md
+```yaml
+workspace: ~/run-workspace
+project: 01.01-hello
+repo: .
 ```
 
-## State Machine
+---
 
-```
-awp propose      awp apply                              awp merge
-    │                │                                     │
-    ▼                ▼                                     ▼
- ┌──────┐   ┌────────────────────────────┐          ┌──────────┐
- │ init │──▶│  execute group by group    │── done ─▶│  merge   │──▶ merged
- └──────┘   └────────────────────────────┘          └──────────┘
+## Protocol depth
 
-                                              awp delete (any stage)
-                                                  │
-                                                  ▼
-                                              deleted
-```
+The README is the front door. The skill is the law.
 
-### Feature Status Flow
+| Document | Role |
+| --- | --- |
+| [`skills/run/SKILL.md`](skills/run/SKILL.md) | Full agent protocol |
+| [`docs/design.md`](docs/design.md) | Design notes & tradeoffs |
+| [`README_CN.md`](README_CN.md) | 中文说明 |
 
-```
-pending → in_progress → done → merged
-```
-
-### Group Execution Flow
-
-```
-For each group:
-  1. Executor reads tasks and context
-  2. Executor presents summary to user
-  3. User confirms (or adjusts)
-  4. Executor implements tasks in worktree
-  5. Advance to next group
-```
-
-## Task Groups
-
-AWP reads `## N. Title` headings from tasks.md as execution boundaries:
-
-```markdown
-## 1. Backend CRUD API          ← Group 1
-- [ ] 1.1 Implement repo layer
-- [ ] 1.2 Implement handler layer
-
-## 2. Frontend Admin Page       ← Group 2
-- [ ] 2.1 Create route and component
-- [ ] 2.2 Add API integration
-```
-
-Each group is reviewed and confirmed independently. The executor marks completed tasks as `- [x]` during implementation.
-
-## Requirements
-
-- Git 2.5+ (worktree support)
-- Bash 4.0+
-- jq (for JSON processing)
-- Python 3 (for tasks.md parsing)
-- Claude Code
+---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+[MIT](LICENSE) · [kl7sn/run](https://github.com/kl7sn/run)

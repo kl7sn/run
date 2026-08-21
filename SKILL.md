@@ -1,40 +1,10 @@
 ---
-name: awp
-description: "AWP overview and help. Use when users say: awp, awp help, what is awp, AWP 帮助."
+name: run
+description: Agent workflow skill. Auto-advance engineering tasks with durable markdown state in a configurable workspace folder. Triggers: /run, /run auto, /run init, /run new, /run bind.
 ---
 
-# AWP: Feature-Driven Development Pipeline
+# /run
 
-AWP automates feature development workflows. Each feature gets one worktree and one branch. An executor agent reviews tasks, then delegates to openspec-apply for execution.
+Install the full skill from [`skills/run/SKILL.md`](skills/run/SKILL.md).
 
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `/awp-propose` | Propose — design, specs, tasks, auto-create feature |
-| `/awp-apply` | Apply — review tasks, confirm, execute via openspec-apply |
-| `/awp-merge` | Merge — rebase base branch, merge, archive, clean up |
-| `/awp-delete` | Delete — discard feature + change artifacts |
-| `/awp-status` | Status — show all features with group/status |
-| `/awp-explore` | Explore — think through ideas before proposing |
-| `/awp-init` | Init — initialize AWP in current project |
-| `/awp-doctor` | Doctor — health check |
-| `/awp-upgrade` | Upgrade — pull latest version |
-
-## Quick Start
-
-```
-/awp-propose "user authentication"     # Design + specs + tasks + auto-create
-/awp-apply auth                          # Review tasks -> confirm -> execute
-/awp-merge auth                        # Rebase + merge + archive + cleanup
-```
-
-## Pipeline
-
-```
-executor reviews task group -> user confirms -> openspec-apply executes
-         |                                              |
-         next group <--- group done -------------------+
-```
-
-Run `/awp-init` first to set up the project and install all sub-commands.
+Quick start: see [README.md](README.md).

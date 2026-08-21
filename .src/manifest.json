@@ -1,6 +1,0 @@
-{
-  "name": "awp",
-  "version": "2.0.0",
-  "distribution": "shared-skill",
-  "description": "AWP - Feature-driven TDD automation with unified propose/create/run/merge pipeline"
-}
