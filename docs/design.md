@@ -12,6 +12,7 @@ Public summary of the workflow. Full rules live in `skills/run/SKILL.md`.
 
 - **Workspace folder**: Markdown only. Obsidian optional.
 - **`.run-state`**: per code-repo session index (`workspace`, `project`, `projects[]`, `session_id`).
+- Prefer `~/…` or absolute paths; keep spaced paths (e.g. iCloud) consistent across all bind entries. After moving a vault, rewrite every bound repo’s state file.
 
 ## Quality
 
@@ -22,8 +23,9 @@ Public summary of the workflow. Full rules live in `skills/run/SKILL.md`.
 ## Auto mode
 
 - `/run auto` keeps advancing ready work.
-- Design-approval gates use dual-agent consensus (author + reviewer), not “please reply continue”.
-- Irreversible git / true product forks still stop the whole run.
+- Design gates (explore→plan, scheme choice, **mid-execute design docs**) use dual-agent consensus with a **mechanical preflight**: recorded verdict, `design-review:` status line, no idle “please confirm / continue”.
+- Asking for human design confirmation under `auto=on` is a protocol error → correct in-turn via dual-agent review.
+- True product forks (goal/non-goal change, capability removal, irreversible release/compliance) still full-stop; routine scoped design does not.
 
 ## Handoff
 

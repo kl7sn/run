@@ -14,7 +14,7 @@ description: Unified workflow entry. Auto-detect phase (explore/plan/execute/rec
 Core loop: **read state → choose phase → execute → self-review → update state → continue**
 
 - Plain `/run`: auto-continues when tasks are ready; may still ask on explore ambiguity or design confirmation.
-- **`/run auto`**: unattended mode—do not ask “continue to next?”; **design/plan gates** use dual-agent consensus, then continue; only non-decidable hard blocks stop the whole run.
+- **`/run auto`**: unattended mode—do not ask “continue to next?”; **design/plan gates** use dual-agent consensus with a mechanical preflight (recorded verdict + `design-review:` status); only true hard blocks / true product forks stop the whole run.
 
 ### Session sticky (do not degrade to ad-hoc coding)
 
@@ -58,6 +58,8 @@ Path priority (high → low):
 1. `workspace:` in the code repo’s `.run-state`
 2. Env `RUN_WORKSPACE`
 3. Default: `~/run-workspace`
+
+Prefer expandable `~/…` or absolute paths. If the path contains spaces (e.g. iCloud `Mobile Documents`), keep the full path consistent across top-level `workspace` and every `projects[].workspace` entry. After moving the vault, rewrite all bound repos’ `.run-state` / legacy `.k-state` paths in one pass.
 
 Recommended layout:
 
@@ -380,6 +382,25 @@ For overnight/unattended runs in **one session + one workstream bind**.
 **Off:** “exit auto” / “stop unattended”, or plain `/run` with explicit exit; set `auto_mode: false`.  
 **Scope:** no out-of-session heartbeat control plane. If the session dies, user restarts `/run auto`.
 
+### Design-gate preflight (mechanical — `auto_mode: true`)
+
+A **design gate** is any moment you would otherwise ask the human to approve a written design before plan/TDD/code, including:
+
+- explore → plan
+- scheme / API / CLI shape choice after a design doc
+- **mid-execute** when a new or substantially revised design artifact is written (e.g. `docs/**/…-design.md`) while a task is `doing`
+
+**Before ending a turn that crossed a design gate**, ALL must hold:
+
+1. A reviewer subagent was actually dispatched (not self-approved in the same thought).
+2. `context.md` → Execution Log (or Key Decisions) records a design-review line with `verdict`, design path, and one-line summary.
+3. Status line tail shows `design-review: pending|approved|revise|escalate` while that gate is active (not only `Tn doing`).
+4. The reply does **not** ask the user to reply 确认 / 继续 / “confirm” / “continue” to unlock plan/TDD.
+
+If any check fails → **protocol error**: do not wait; run dual-agent review in this turn (or full-stop on `escalate`). Ending the turn idle at a human design gate is forbidden even if the status line says `auto=on`.
+
+**Protocol correction:** if you already asked for human design confirmation under `auto_mode: true`, immediately withdraw the wait, run dual-agent review, append `protocol-correction: design-gate` to the Execution Log, then continue from the verdict. Do not require the user to re-send `/run auto`.
+
 ### In-chat status line (required)
 
 On `/run` recover/advance (including sticky engineering turns), prefix replies:
@@ -391,6 +412,8 @@ On `/run` recover/advance (including sticky engineering turns), prefix replies:
 or:
 
 ```text
+[/run · auto=on · 01-demo/01.01-hello · design-review: pending]
+[/run · auto=on · 01-demo/01.01-hello · design-review: approved → plan]
 [/run · auto=off · 01-demo/01.01-hello · blocked: waiting on design approval]
 ```
 
@@ -398,9 +421,9 @@ or:
 |---|---|
 | `auto=on` / `auto=off` | Handoff `auto_mode` (default off) |
 | Path | `<projectId>/<workstreamId>` |
-| Tail | `Tn doing` / `T01+T02 doing` / `blocked: …` / `done` / `idle` |
+| Tail | `Tn doing` / `T01+T02 doing` / `design-review: …` / `blocked: …` / `done` / `idle` |
 
-Rules: every code/task-advancing reply; tiny acks may omit; on enter/exit auto, also say “auto enabled/disabled”; full-stop summaries use the same prefix.
+Rules: every code/task-advancing reply; tiny acks may omit; on enter/exit auto, also say “auto enabled/disabled”; full-stop summaries use the same prefix; **design gates under auto must use a `design-review:` tail until the gate clears**.
 
 ### vs plain `/run`
 
@@ -410,12 +433,24 @@ Rules: every code/task-advancing reply; tiny acks may omit; on enter/exit auto, 
 | Optional explore questions | may ask | prefer decide from spec; else dual-agent; else hard stop |
 | Design confirmation (“review then reply continue”) | ask user | **forbidden idle wait** → dual-agent consensus then plan/implement |
 | Build/test fail | self-fix | same (`revise`) |
-| Irreversible git / bind ambiguity / true product fork | stop | same full-stop |
+| Irreversible git / bind ambiguity / **true** product fork | stop | same full-stop |
 | All done / only non-decidable blocked | report | report and end auto wave |
+
+### What counts as a true product fork (human / escalate only)
+
+**Dual-agent may decide** (do not ask the user by default): implementation boundaries, API/CLI shapes, test contracts, failure modes, compatibility within an already agreed goal.
+
+**Human / `escalate` only when** the change alters product direction in a way spec+review cannot settle, e.g.:
+
+- changes target user / business goal / non-goals
+- removes a user-facing capability the workstream committed to keep
+- irreversible release / data-destruction / compliance / secrets policy without prior authorization
+
+Do **not** treat ordinary design docs for an already-scoped task (flags, date semantics, adapter wiring) as a product fork.
 
 ### Dual-agent consensus review (`auto_mode: true` only)
 
-Replaces “design done → wait for human continue” (explore→plan, scheme choice, post-spec gate).
+Replaces “design done → wait for human continue” (explore→plan, scheme choice, post-spec gate, **mid-execute design artifacts**).
 
 | Role | Duty | Workspace |
 |---|---|---|
@@ -425,8 +460,8 @@ Replaces “design done → wait for human continue” (explore→plan, scheme c
 
 Flow:
 
-1. Author states design path + task to unlock (if any).
-2. Parent dispatches reviewer; required output:
+1. Author states design path + task to unlock (if any). Status line → `design-review: pending`.
+2. Parent dispatches reviewer with the **fixed prompt** below; required output:
 
 ```yaml
 verdict: approve | revise | escalate
@@ -435,13 +470,36 @@ blocking_reasons: []
 summary: "one line"
 ```
 
-3. **`approve`:** parent records consensus; design-wait `blocked` → `ready`; **do not** ask “continue”; enter plan/TDD.
+3. **`approve`:** parent records consensus in `context.md`; design-wait `blocked` → `ready` if needed; **do not** ask “continue”; status → `design-review: approved → plan` (or execute); enter plan/TDD.
 4. **`revise`:** author updates; max **2** revise cycles; still revise → `escalate` full-stop.
 5. **`escalate`** or deadlock: full-stop with blocker (both sides’ points)—morning human gate.
 
-Reviewer minimum checks: goals vs non-goals; secrets never logged; failure modes; TDD-ready contracts; product forks disguised as settled tech → `escalate`.
+#### Fixed reviewer prompt (copy into subagent)
 
-Forbidden: idle “please review, reply continue”; coding before approve; fake “default scheme A” consensus; reviewer writing tasks/context.
+```text
+You are the /run design reviewer. Read-only. Do not edit files or workspace state.
+
+Design path: <path>
+Workstream / task: <projectId/workstreamId · Tn>
+Acceptance / goal context: <short paste from tasks.md or Handoff>
+
+Check at minimum:
+1) Goals vs non-goals — no silent scope creep
+2) Safety/privacy — secrets never logged or echoed; constraints testable
+3) Failure modes and compatibility stated
+4) Test contracts are concrete enough for TDD
+5) Any true product fork (target user/business goal/non-goal change, capability removal, irreversible release/compliance) → verdict escalate
+
+Return ONLY:
+verdict: approve | revise | escalate
+issues: []          # required if revise — actionable
+blocking_reasons: [] # required if escalate
+summary: "one line"
+```
+
+Reviewer minimum checks match the prompt. Product forks disguised as settled tech → `escalate`.
+
+Forbidden: idle “please review, reply continue”; coding before approve; fake “default scheme A” consensus; reviewer writing tasks/context; showing `auto=on` while waiting on a human design confirmation.
 
 ### Full-stop (required)
 
@@ -450,15 +508,16 @@ Forbidden: idle “please review, reply continue”; coding before approve; fake
 3. Reply: status line + scannable Handoff summary
 4. **Stop**—no next claim; do not skip the gate to other ready tasks
 
-Still full-stop (no dual-agent auto-approve): irreversible git/PR/release, bind ambiguity, illegal multi-`doing`, dual-agent escalate/exhausted rounds, unapproved secrets/compliance choices, verification environment impossible.
+Still full-stop (no dual-agent auto-approve): irreversible git/PR/release, bind ambiguity, illegal multi-`doing`, dual-agent `escalate`/exhausted rounds, unapproved secrets/compliance choices, verification environment impossible, **true product forks** (see above).
 
 ### Auto forbidden
 
-- Product forks that spec+review cannot decide
+- Asking the user to 确认 / 继续 / confirm / continue to pass a design gate
+- Ending a turn at a design gate without a recorded dual-agent verdict
+- Product forks that meet the true-fork criteria above
 - push / merge / open PR / release
 - Inventing directories without a workstream bind
 - Using auto to skip session sticky / workspace accounting
-- Waiting on human “continue” for design gates instead of dual-agent review
 - Full-stop without a Handoff block
 
 ## Handoff protocol (where you left off)
@@ -550,7 +609,7 @@ Switching to an unbound workstream mid-session → `escalate` (suggest `/run bin
 **Stop and ask only for:**
 
 1. Cross-repo dependency needing confirmation
-2. Product direction change
+2. **True product direction change** (see Auto mode · true product fork) — not routine design for an already-scoped task
 3. Irreversible ops: git push, merge, PR, production release
 4. State contradiction
 5. Recover anomaly
@@ -561,14 +620,24 @@ Switching to an unbound workstream mid-session → `escalate` (suggest `/run bin
 10. **Unbound session risk:** `.run-state` workstream bind exists but this turn’s code changes are not mapped to a `tasks.md` row
 11. Parallel merge conflict
 12. Subagent wrote workspace—stop path, parent repairs
+13. **Auto design-gate protocol breach left unresolved** (asked human to confirm design under `auto_mode: true` and did not run dual-agent correction)
 
-**Not hard blocks:** task done with evidence, review/verify passed, durable state updated, compile/test fails (self-fix), legal parallel multi-`doing`.
+**Not hard blocks:** task done with evidence, review/verify passed, durable state updated, compile/test fails (self-fix), legal parallel multi-`doing`, ordinary mid-task design docs under auto (those use dual-agent).
 
 Missing `/run` in the prompt / “small change” / prior ad-hoc edits / debug follow-ups are **not** reasons to skip `/run` when bound.
 
 ## Mid-execution design revision
 
-If the user changes design during execute: handle in place (no plan rollback) unless task decomposition is invalidated; update artifacts then code; keep verification evidence; record in Key Decisions.
+If the user changes design during execute, or the agent writes a new/substantially revised design artifact while a task is `doing`:
+
+1. **Do not** roll back to a blank plan phase unless task decomposition is invalidated
+2. Assess blast radius; update design artifacts, then propagate to code
+3. Keep verification evidence for revised done work
+4. Record in Key Decisions
+5. **If `auto_mode: true`:** treat the new design as a **design gate** — dual-agent preflight required; **do not** ask the user to 确认/继续 before plan/TDD
+6. Continue remaining tasks after approve (or full-stop on escalate)
+
+Only when task decomposition is fully invalidated, return to plan and rewrite `tasks.md`.
 
 ## Init protocol (`/run init` — project only)
 
