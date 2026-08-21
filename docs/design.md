@@ -30,3 +30,5 @@ Public summary of the workflow. Full rules live in `skills/run/SKILL.md`.
 ## Handoff
 
 `context.md` uses **`## Handoff` as the only runtime section** (no separate “Current status”). Optional `## Gotchas` for long-lived constraints; `## Key Decisions` for decision history; `## Execution Log` for evidence.
+
+`status: closed` ends the workstream. New durable work must **not** reopen it — `/run new` under the parent (or bind another active line). Binding a closed line while needing tasks/decisions/code is an abnormal bind / hard block.

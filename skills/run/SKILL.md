@@ -20,24 +20,45 @@ Core loop: **read state → choose phase → execute → self-review → update 
 
 **Failure mode:** the repo already has `.run-state` bound to a workstream, but later requests are treated as ordinary local edits—no `/run` restore and no updates to workspace `tasks.md` / `context.md`.
 
-**Hard rule:** if a valid `.run-state` resolves to a **workstream** binding (this session’s `session_id` matches, or top-level `workspace` points at a workstream folder), then any request that changes code / fixes bugs / adds features / lands diagnostics **must**:
+**Hard rule:** engineering work (code / bugs / features / landed diagnostics / durable architecture decisions) **must** bind an **active execution workstream** (`Handoff status: open`, and `.run-state` `projects[].status` not `completed` / `archived`).
+
+If a valid `.run-state` resolves to a **workstream** binding (this session’s `session_id` matches, or top-level `workspace` points at a workstream folder), then any such request **must**:
 
 1. Run the recover protocol (read `.run-state` → `tasks.md` + `context.md` + homepage)
-2. Map the request to an existing ready/doing task, or **add** a `tasks.md` row then claim it (never change code without accounting)
-3. Update durable state during/after work (status, Done evidence, decisions/log in `context.md`)
+2. **If that workstream is closed** → treat as **abnormal bind** (see below); do **not** reopen it
+3. Otherwise map the request to an existing ready/doing task, or **add** a `tasks.md` row then claim it (never change code without accounting)
+4. Update durable state during/after work (status, Done evidence, decisions/log in `context.md`)
 
-**Forbidden:**
+**Also forbidden on active lines:**
 
 - “Tiny change / quick debug” → skip binding and workspace
 - Saying “I’ll fill tasks later” while still editing code
 - Starting a new explore doc stream that detaches from the bound workstream
 
+### Closed workstream = abnormal bind (do not reopen)
+
+A workstream is **closed** when any of:
+
+- `context.md` → `## Handoff` has `status: closed`
+- `.run-state` entry has `status: completed` or `archived`
+- all tasks `done` and Handoff already closed for that line
+
+**If the session is bound to a closed workstream** (or recover lands there) **and** this turn needs durable landing (decisions, tasks, code, specs that will drive work):
+
+1. This is an **abnormal scenario** — the conversation is not on an execution-ready line
+2. **Forbidden:** flip Handoff back to `open`, “recovery backfill” onto the closed line, or pretend the old workstream is still the execution unit
+3. **Required:** `/run new` under the parent project (preferred), or `/run bind` to an existing **active** workstream; carry forward a short pointer/wikilink to the closed line in the new `context.md`
+4. Then continue sticky rules on the **new/active** bind only
+
 **Only exemptions** (say explicitly “not using /run this turn”):
 
-- User opts out of `/run`, asks concepts only, read-only code review, or a one-off aside
-- Pure Q&A with no file writes
+- User opts out of `/run`
+- Pure read-only retrospective about a closed line (no repo writes, no workspace writes)
+- Concepts-only Q&A with no file writes
 
-If you already skipped accounting: stop ad-hoc work; recover; backfill tasks in real order (label “recovery backfill”); **do not fake** the original ready→doing timeline; then continue.
+Do **not** use the “concepts-only” exemption when the discussion changes architecture constraints that should land as durable state — that requires an **active** workstream (`/run new` if the previous line is closed).
+
+**Skipped accounting on an active line:** stop ad-hoc work; recover; backfill tasks in real order (label “recovery backfill”); **do not fake** the original ready→doing timeline; then continue. **Never** apply recovery backfill to a closed workstream — open a new one instead.
 
 ## Commands
 
@@ -564,7 +585,12 @@ Optional short refresh after a `done` if the session is about to end.
 - notes: <optional one line>
 ```
 
-Rules: single source of runtime truth; keep bounded—link out to tasks/spec/log; never paste whole chats; never store secrets/cookies/tokens/real UUIDs; migrate legacy current-status sections into Handoff then delete them.
+Rules:
+
+- Single source of runtime truth; keep bounded—link out to tasks/spec/log; never paste whole chats
+- Never store secrets/cookies/tokens/real UUIDs
+- Migrate legacy current-status sections into Handoff then delete them
+- `status: closed` ends the wave — **do not reopen** for new durable work; use `/run new` (or bind another active workstream) and optionally wikilink the closed line
 
 ### Gotchas (optional, recommended)
 
@@ -579,9 +605,10 @@ Cross-task constraints only; one-off failures go to `failed_approaches` or Execu
 ### Using Handoff on recover
 
 1. Open Handoff → align `current_tasks` / `blocker` / `next_action` / `resume_hint`
-2. Conflict with `tasks.md` → hard block (**tasks win**; fix Handoff or ask)
-3. Missing Handoff on legacy workstream → infer, then write one before ending the turn
-4. Cross-vendor: workspace Handoff is the minimum packet; tasks remain authoritative
+2. If `status: closed` and this turn needs durable landing → **abnormal bind**; do not reopen — `/run new` or bind active (Session sticky)
+3. Conflict with `tasks.md` → hard block (**tasks win**; fix Handoff or ask)
+4. Missing Handoff on legacy workstream → infer, then write one before ending the turn
+5. Cross-vendor: workspace Handoff is the minimum packet; tasks remain authoritative
 
 ### Chat display
 
@@ -621,6 +648,7 @@ Switching to an unbound workstream mid-session → `escalate` (suggest `/run bin
 11. Parallel merge conflict
 12. Subagent wrote workspace—stop path, parent repairs
 13. **Auto design-gate protocol breach left unresolved** (asked human to confirm design under `auto_mode: true` and did not run dual-agent correction)
+14. **Closed workstream bind with durable work** — session points at completed/archived/closed line but the turn needs tasks/decisions/code; require `/run new` or bind active (do not reopen)
 
 **Not hard blocks:** task done with evidence, review/verify passed, durable state updated, compile/test fails (self-fix), legal parallel multi-`doing`, ordinary mid-task design docs under auto (those use dual-agent).
 
@@ -671,14 +699,15 @@ When `/run` resumes or sticky engineering continues:
 3. Sync top-level on match
 4. Else interactive bind if ambiguous
 5. Read tasks/context; legal parallel `doing` OK; illegal multi-`doing` → hard block
-6. Read open Handoff + Gotchas
-7. Homepage rules
-8. Keep Handoff `review_status` if set
-9. Map user intent to a task row (create if needed)—never code without a row
-10. Continue from breakpoint / new claim (parallel waves allowed)
-11. Keep refreshing Handoff; confirm completeness before pause/switch
+6. Read Handoff + Gotchas
+7. **Closed-line check:** if Handoff `status: closed` and/or bind `status: completed|archived`, and this turn needs durable landing → **abnormal bind**; stop recover-onto-closed; require `/run new` or `/run bind` to an **active** workstream (see Session sticky). Do not reopen.
+8. Homepage rules
+9. Keep Handoff `review_status` if set (open lines only)
+10. Map user intent to a task row (create if needed)—never code without a row
+11. Continue from breakpoint / new claim (parallel waves allowed)
+12. Keep refreshing Handoff; confirm completeness before pause/switch
 
-Safety: session bind over same-repo overwrite; tasks vs Handoff conflict → hard block (tasks authoritative); done without verify → verify first; no “code first, state later”; parent-only workspace writes; checkout/tests beat stale Gotchas (then update Gotchas); migrate legacy current-status sections into Handoff.
+Safety: session bind over same-repo overwrite; tasks vs Handoff conflict → hard block (tasks authoritative); done without verify → verify first; no “code first, state later”; parent-only workspace writes; checkout/tests beat stale Gotchas (then update Gotchas); migrate legacy current-status sections into Handoff; **never reopen a closed workstream for backfill**.
 
 ## `tasks.md` format
 

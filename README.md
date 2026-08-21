@@ -57,7 +57,7 @@ Built for people who already use agents daily — and keep losing the thread bet
 
 **Unattended with hard stops.** `/run auto` keeps ready tasks moving. Design gates require dual-agent consensus with a recorded verdict (no idle “please confirm”). Only irreversible git, true product forks, and true ambiguity hard-stop.
 
-**Session sticky.** If the repo is already bound, follow-up “quick fixes” stay inside `/run`. No silent fall-back to ad-hoc coding.
+**Session sticky.** Follow-ups stay inside `/run` on an **active** workstream. Closed lines are not reopened for backfill — `/run new` (or bind another active workstream) instead. No silent fall-back to ad-hoc coding.
 
 ---
 
