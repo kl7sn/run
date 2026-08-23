@@ -51,7 +51,9 @@ Built for people who already use agents daily — and keep losing the thread bet
 
 **Three layers.** Project → workstream → fine tasks. The workstream is the execution unit; the project is the container.
 
-**Single writer.** Parallel subagents may change code (preferably in worktrees). Only the parent `/run` writes `tasks.md` / `context.md` / `.run-state`.
+**Single writer.** Parallel subagents may change code (preferably in worktrees). Only the parent `/run` writes state files. **Human smoke** on the worktree is required before closing a line — automated test gates alone are not enough.
+
+**Integration gate.** All tasks `done` ≠ workstream closed. Record worktree path/branch, pass human smoke (or explicit waive), then choose merge / PR / keep / prune — no silent orphan worktrees.
 
 **Handoff over chat archaeology.** Resume from a bounded `## Handoff` block — not from scrolling yesterday’s transcript.
 

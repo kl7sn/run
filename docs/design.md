@@ -17,8 +17,15 @@ Public summary of the workflow. Full rules live in `skills/run/SKILL.md`.
 ## Quality
 
 - Done requires verification evidence in `context.md` execution log.
+- **Automated gates** satisfy task `done`; **human smoke** on the worktree satisfies workstream close.
 - Illegal multiple `doing` (no parallel wave) is a hard block.
 - Independent ready tasks may run in parallel via subagents; **only the parent writes workspace files**. Prefer worktree isolation for code edits.
+
+## Integration gate
+
+- Do not set `Handoff status: closed` while `smoke_status: pending` or an active unmerged worktree exists without disposition.
+- Handoff tracks `worktree_path`, `worktree_branch`, `worktree_status`, `smoke_status`, `integration_next`.
+- `/run new` should surface orphan worktrees from sibling lines before adding another.
 
 ## Auto mode
 

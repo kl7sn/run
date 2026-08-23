@@ -51,7 +51,9 @@ Agent 擅长写代码。它们不擅长：**记住做到哪了**、**证明做�
 
 **三层模型。** Project → workstream → 细任务。执行单元是 workstream；项目只是容器。
 
-**单写者。** 并行 subagent 可以改代码（优先 worktree）；只有父 `/run` 写 `tasks.md` / `context.md` / `.run-state`。
+**单写者。** 并行 subagent 可改代码（优先 worktree）；只有父 `/run` 写状态。**关线前须在 worktree 上人工冒烟**——仅靠自动化测试不够。
+
+**集成闸。** 全部 task `done` ≠ workstream 可关。须登记 worktree 路径/分支、通过人工冒烟（或明确豁免），再选 merge / PR / 保留 / prune——禁止静默遗留 orphan worktree。
 
 **Handoff 优于考古聊天记录。** 续跑先读有界的 `## Handoff`，而不是翻昨天的 transcript。
 

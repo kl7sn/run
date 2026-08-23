@@ -377,7 +377,70 @@ Before `doing → done`:
 3. Verify fail / cannot verify → `review_status: revise`; **must not** mark done or claim next task.
 4. No tests but repo norms require them → escalate.
 
+**Automated gate ≠ human smoke.** Passing `go test`, CI-style suites, or agent-written “smoke tests” may satisfy a **task** row (e.g. T07). It does **not** satisfy the **workstream integration gate** (see below). Do not set `Handoff status: closed` or `.run-state status: completed` based on automated gates alone.
+
 On recover: `done` without verify evidence → verify first.
+
+## Integration gate & worktree lifecycle
+
+A workstream is **not finished** when all `tasks.md` rows are `done`. Closing requires an explicit **integration gate** so branches/worktrees are not orphaned and follow-up defects do not force premature `/run new`.
+
+### Two verification layers
+
+| Layer | Who | Satisfies | May close workstream? |
+|---|---|---|---|
+| **Automated gate** | Agent (tests, vet, build, scripted checks) | `doing → done` on task rows | **No** |
+| **Human smoke** | User on the real worktree / real UI / real doc | `smoke_status: passed` (or `waived-by-user`) | **Yes** (with worktree disposition) |
+
+Human smoke means the user exercises the feature branch as they would before merge (manual or their own checklist). Agent cannot self-approve `smoke_status: passed`.
+
+### Handoff fields (required once a code worktree exists)
+
+When execution uses a git worktree or feature branch, keep these in `## Handoff`:
+
+```markdown
+- worktree_path: <absolute path or none>
+- worktree_branch: <branch or ->
+- worktree_status: none | active | smoke_pending | ready_to_merge | pruned
+- smoke_status: pending | passed | waived-by-user
+- integration_next: none | merge | pr | keep-branch | prune
+```
+
+Rules:
+
+- Creating a worktree → set `worktree_path`, `worktree_branch`, `worktree_status: active`, `smoke_status: pending`
+- All tasks `done` but smoke not passed → `worktree_status: smoke_pending`; **keep `Handoff status: open`**
+- User confirms smoke OK → `smoke_status: passed`; then record `integration_next` and disposition
+- **Forbidden:** `Handoff status: closed` while `worktree_status: active` or `smoke_pending` without explicit `integration_next` and user smoke (`passed` or `waived-by-user`)
+- **Forbidden:** close workstream and leave an unregistered orphan worktree
+
+### Close workstream checklist (all required)
+
+Before `Handoff status: closed` **and** `.run-state projects[].status: completed`:
+
+1. All tasks `done` with Done evidence
+2. `smoke_status: passed` **or** user explicitly waived (`waived-by-user` in Handoff + Execution Log)
+3. `integration_next` chosen and recorded: `merge` | `pr` | `keep-branch` | `prune`
+4. Worktree disposition executed or explicitly deferred with `keep-branch` (path + branch still in Handoff — not silent orphan)
+5. If `prune`: run `git worktree remove` (or equivalent), set `worktree_status: pruned`, clear or mark path
+
+After close: `next_action` on closed lines should point to integration follow-up (merge/PR), not new feature work.
+
+### `/run new` when the real issue is unmerged work
+
+Before `/run new` under the same parent project:
+
+1. List sibling workstreams with `worktree_status: active` or `smoke_pending` in Handoff
+2. If the new work is a defect on an **unmerged branch** from a line that closed too early → **protocol error** on the closer; for the current turn, prefer **reusing that branch/worktree** in the new or current active line rather than spawning another worktree
+3. If orphan worktrees exist for this repo, surface them and ask: smoke / merge / prune — do not silently add a third worktree
+
+### Status line (integration)
+
+While smoke is pending:
+
+```text
+[/run · auto=off · 01-shimocli/01.03-mixed-rdoc-edit · smoke_pending · feat/mixed-rdoc-edit]
+```
 
 ## Auto-advance rules
 
@@ -390,7 +453,7 @@ After each task:
 3. Blocker upstream done / cleared → `blocked` → `ready`
 4. Check hard blocks
 5. If ready and no hard block → next immediately
-6. All done → report complete
+6. All tasks `done` → run **integration gate** (smoke + worktree disposition); **do not** auto-close the workstream
 7. Blocked with no ready → report blockers
 
 **Forbidden stop reasons:** “Tn done, Tn+1 ready”, “state synced”, “can continue later” (unless user asks to pause or “only this one”).
@@ -553,7 +616,7 @@ Like ai-memory: on cross-session / cross-vendor resume, **read a bounded handoff
 
 1. Full-stop (hard block / escalate / auto stop)
 2. User ends session / switches window / switches vendor
-3. All tasks done (`status: closed`)
+3. All tasks done **and integration gate satisfied** (`status: closed`)
 4. Long pause after a parallel wave finishes
 
 Optional short refresh after a `done` if the session is about to end.
@@ -582,6 +645,11 @@ Optional short refresh after a `done` if the session is about to end.
 - resume_hint: <e.g. continue or /run auto>
 - key_paths:
   - <design/code paths>
+- worktree_path: <absolute path or none>
+- worktree_branch: <branch or ->
+- worktree_status: none | active | smoke_pending | ready_to_merge | pruned
+- smoke_status: pending | passed | waived-by-user
+- integration_next: none | merge | pr | keep-branch | prune
 - notes: <optional one line>
 ```
 
@@ -590,7 +658,7 @@ Rules:
 - Single source of runtime truth; keep bounded—link out to tasks/spec/log; never paste whole chats
 - Never store secrets/cookies/tokens/real UUIDs
 - Migrate legacy current-status sections into Handoff then delete them
-- `status: closed` ends the wave — **do not reopen** for new durable work; use `/run new` (or bind another active workstream) and optionally wikilink the closed line
+- `status: closed` ends the wave only after the **integration gate** (smoke + worktree disposition) — **do not reopen** for new durable work; use `/run new` (or bind another active workstream) and optionally wikilink the closed line
 
 ### Gotchas (optional, recommended)
 
@@ -649,8 +717,9 @@ Switching to an unbound workstream mid-session → `escalate` (suggest `/run bin
 12. Subagent wrote workspace—stop path, parent repairs
 13. **Auto design-gate protocol breach left unresolved** (asked human to confirm design under `auto_mode: true` and did not run dual-agent correction)
 14. **Closed workstream bind with durable work** — session points at completed/archived/closed line but the turn needs tasks/decisions/code; require `/run new` or bind active (do not reopen)
+15. **Premature workstream close** — `Handoff status: closed` or `completed` while `smoke_status: pending` or `worktree_status: active|smoke_pending` without disposition; treat as protocol error on recover
 
-**Not hard blocks:** task done with evidence, review/verify passed, durable state updated, compile/test fails (self-fix), legal parallel multi-`doing`, ordinary mid-task design docs under auto (those use dual-agent).
+**Not hard blocks:** task done with automated evidence, review/verify passed, durable state updated, compile/test fails (self-fix), legal parallel multi-`doing`, ordinary mid-task design docs under auto (those use dual-agent). **All tasks done** with smoke still pending is **not** “workflow complete” — stay open at integration gate.
 
 Missing `/run` in the prompt / “small change” / prior ad-hoc edits / debug follow-ups are **not** reasons to skip `/run` when bound.
 
@@ -689,6 +758,7 @@ If a project already exists and user says init → use `/run new`.
 7. Append parent “Workstreams” table link
 8. Point this session’s `.run-state` at the new workstream
 9. **Do not auto-execute** by default; ask whether to `/run` now
+10. **Orphan check:** if this repo already has worktrees from sibling workstreams (`worktree_status: active|smoke_pending`), list them and recommend smoke / merge / prune before allocating another worktree
 
 ## Recover protocol
 
@@ -755,6 +825,11 @@ created: <date>
 - next_action: <one step>
 - resume_hint: <hint>
 - key_paths: []
+- worktree_path: <absolute path or none>
+- worktree_branch: <branch or ->
+- worktree_status: none | active | smoke_pending | ready_to_merge | pruned
+- smoke_status: pending | passed | waived-by-user
+- integration_next: none | merge | pr | keep-branch | prune
 - notes: <optional>
 
 ## Gotchas
