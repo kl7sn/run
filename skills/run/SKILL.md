@@ -68,8 +68,9 @@ Do **not** use the “concepts-only” exemption when the discussion changes arc
 | `/run new` [workstreamId] | Create nested **workstream** under parent (layer 2); stop by default (no auto execute) |
 | `/run bind` | Interactively rebind this session to a workstream / project / new |
 | `/run lang` [en\|zh] | Show or set **document language** for durable state + human-facing replies |
-| `/run review` [window] | **Retro + maintain**: scan workspace artifacts → report → **`up` phase** patches skills (default) |
-| `/run review scan-only` [window] | **Scan only**: report findings; no skill edits |
+| `/run review` [window] | **Retro + maintain**: scan **current project** (default) → report → **`up` phase** |
+| `/run review all` [window] | Scan **entire workspace** (all projects) |
+| `/run review scan-only` [window] | Scan + report only; no skill edits |
 | `/run` | Advance explore/plan/execute/recover; auto-continue when ready |
 | `/run auto` | **Unattended**: keep ready tasks flowing; design confirmation → dual-agent consensus then continue; true hard blocks stop |
 
@@ -799,38 +800,59 @@ Standalone **`up`** remains valid for thread retros without a review report.
 ### Invocation
 
 ```text
-/run review              # default: scan + report + up (apply skill patches)
-/run review scan-only    # scan + report only; no skill edits
+/run review              # default: current project + time window + report + up
+/run review all          # entire workspace (all projects under Projects/)
+/run review scan-only    # current project, report only; no skill edits
+/run review all scan-only
 /run review yesterday
 /run review 7d
 /run review 2026-08-20..2026-08-24
+/run review 01-shimocli                    # explicit project scope
 /run review 01-shimocli/01.04-empty-paragraph-projection   # single workstream
 ```
+
+**Scope resolution (phase 1, before scan):**
+
+| Priority | Source | Scope |
+|---|---|---|
+| 1 | User names `NN-<slug>` or `NN-<slug>/NN.MM-<slug>` in command | That project or workstream |
+| 2 | User says `all` / `workspace` / `--all` | `Projects/**` (full workspace) |
+| 3 | **Default** — repo `.run-state` bind | **Current project only** |
+| 4 | No bind, `RUN_WORKSPACE` set | Ask: pick project, `/run review all`, or `/run bind` first |
+
+**Current project** from bind:
+
+- Bound **workstream** → `parent_project` from Handoff / homepage / `.run-state projects[].parent_project` (e.g. `01-shimocli`)
+- Bound **project** folder → that project id (e.g. `01-shimocli`)
+- Scan path: `Projects/<projectId>/**/{tasks,context,workstream,project}.md` only
+- `.run-state`: only `projects[]` entries whose workstream lives under that project (same repo if known)
 
 Aliases for scan-only: `scan-only`, `--scan-only`, `no-up`, `--no-up`.
 
 Status line prefix:
 
 ```text
-[/run · review · up · lang=en · 3 workstreams · 2 findings · 1 patched]
-[/run · review · scan-only · lang=en · 3 workstreams · 2 findings]
+[/run · review · up · project=01-shimocli · lang=en · 2 workstreams · 1 finding · 1 patched]
+[/run · review · scan-only · project=01-shimocli · lang=en · 2 workstreams · 1 finding]
+[/run · review · up · scope=all · lang=en · 5 workstreams · 3 findings]
 ```
 
 ### Data sources (authoritative)
 
-Scan only:
+Scan only within **resolved scope** (default: one project):
 
-1. **Workspace** under resolved `RUN_WORKSPACE` / `.run-state` `workspace` root → `Projects/**/{tasks,context,workstream,project}.md`
-2. **Repo** `.run-state` / legacy `.k-state` (all entries in `projects[]`)
+1. **Workspace** → `Projects/<projectId>/**/{tasks,context,workstream,project}.md` (or `Projects/**/…` when `scope=all`)
+2. **Repo** `.run-state` / legacy `.k-state` — **`projects[]` entries for this scope** (and this repo when inferrable)
 3. **Optional corroboration:** `git worktree list` in bound repos (orphan / drift vs Handoff `worktree_path`)
 
 **Do not** scrape Cursor/Claude/Codex session exports by default. If the user pastes a transcript excerpt, treat it as **supplemental evidence** only — workspace wins on conflict.
 
 ### Time window
 
-- Default: **previous local calendar day 00:00 → now** (or “since last `/run review` report” if one exists under `Projects/_run-review/`)
+- Default: **previous local calendar day 00:00 → now** (or “since last `/run review` report” for the **same scope** under `Projects/_run-review/`)
 - Filter workstreams by `Handoff updated`, `Execution Log` dates, `.run-state projects[].note`, or file `mtime` inside the window
 - Include workstreams with **any** activity in window, even if created earlier
+- **Within scope only** — default scope is one project, not the whole vault
 
 ### Heuristic rules (check each hit workstream)
 
@@ -925,13 +947,13 @@ Follow the personal **`up`** skill (`~/.codex/skills/up/SKILL.md` or synced copy
 - **No execution** this turn: no task claims, no Handoff edits, no workstream code changes
 - Phase 1 always runs; phase 2 runs by default
 - Reply with scannable summary + path to report file
-- If zero workstreams in window → say so; suggest widening window or confirming workspace path
+- If zero workstreams in window → say so; suggest widening window, explicit project id, or `/run review all`
 - Repeat findings across reviews → bump priority in Summary
 
 ### Relationship to execution
 
 - `/run review` is **meta** — not a substitute for `/run` on an active line
-- Run from any repo with `.run-state`, or with `RUN_WORKSPACE` set
+- Run from any repo with `.run-state` (default scope = that bind’s **project**), or with `RUN_WORKSPACE` + explicit project / `all`
 - Safe to run in a **fresh session** (no workstream bind required)
 - Workstream fixes from findings → next `/run` on the affected line (review does not reopen closed workstreams)
 
