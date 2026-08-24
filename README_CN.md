@@ -27,10 +27,11 @@ Agent 擅长写代码。它们不擅长：**记住做到哪了**、**证明做�
 
 <br>
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-0a0a0a?style=flat-square)](LICENSE)
-[![Agents](https://img.shields.io/badge/agents-Cursor%20·%20Claude%20·%20Codex-111111?style=flat-square)](#安装)
-[![State](https://img.shields.io/badge/state-Markdown%20workspace-222222?style=flat-square)](#workspace)
-[![English](https://img.shields.io/badge/docs-English-333333?style=flat-square)](README.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Install](https://img.shields.io/badge/install-npx%20skills-6366f1?style=flat-square)](https://skills.sh/kl7sn/run)
+[![Agents](https://img.shields.io/badge/agents-Cursor%20·%20Claude%20·%20Codex-555?style=flat-square)](#安装)
+[![State](https://img.shields.io/badge/state-Markdown%20workspace-lightgrey?style=flat-square)](#workspace)
+[![English](https://img.shields.io/badge/docs-English-informational?style=flat-square)](README.md)
 
 ---
 

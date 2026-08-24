@@ -27,11 +27,11 @@ No control plane. No SaaS. One workspace folder. Optional Obsidian.
 
 <br>
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-0a0a0a?style=flat-square)](LICENSE)
-[![skills.sh](https://skills.sh/b/kl7sn/run)](https://skills.sh/kl7sn/run)
-[![Agents](https://img.shields.io/badge/agents-Cursor%20·%20Claude%20·%20Codex-111111?style=flat-square)](#install)
-[![State](https://img.shields.io/badge/state-Markdown%20workspace-222222?style=flat-square)](#workspace)
-[![中文](https://img.shields.io/badge/docs-%E4%B8%AD%E6%96%87-333333?style=flat-square)](README_CN.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Install](https://img.shields.io/badge/install-npx%20skills-6366f1?style=flat-square)](https://skills.sh/kl7sn/run)
+[![Agents](https://img.shields.io/badge/agents-Cursor%20·%20Claude%20·%20Codex-555?style=flat-square)](#install)
+[![State](https://img.shields.io/badge/state-Markdown%20workspace-lightgrey?style=flat-square)](#workspace)
+[![中文](https://img.shields.io/badge/docs-中文-informational?style=flat-square)](README_CN.md)
 
 ---
 
