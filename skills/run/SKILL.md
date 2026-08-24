@@ -790,7 +790,7 @@ If a project already exists and user says init → use `/run new`.
 
 **Purpose:** evaluate whether `/run` protocol held up over a time window, using **bounded durable artifacts only** — not full agent chat transcripts. Default flow is **two phases**:
 
-1. **Scan + report** — heuristics R01–R10 → `Projects/_run-review/YYYY-MM-DD-review.md`
+1. **Scan + report** — heuristics R01–R10 → `Projects/<projectId>/_run-review/YYYY-MM-DD-review.md`
 2. **Maintain (`up`)** — apply skill patches from the report’s Skill backlog (follow personal **`up`** skill inline)
 
 **Does not** modify workstream state (`tasks.md`, Handoff), code repos, or `.run-state`. **Does** modify skill files in phase 2 unless `scan-only`.
@@ -884,6 +884,7 @@ Template:
 ```markdown
 # /run review — YYYY-MM-DD
 
+- scope: project 01-shimocli | workstream 01-shimocli/01.04-… | all
 - window: <range>
 - workspace: <path>
 - repos scanned: <list>

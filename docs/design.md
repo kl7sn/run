@@ -52,4 +52,4 @@ Public summary of the workflow. Full rules live in `skills/run/SKILL.md`.
 
 ## Review (`/run review`)
 
-Retro over workspace + `.run-state` (not chat transcripts). **Default scope: current project** from `.run-state` bind; `/run review all` scans every project. Heuristic findings → `Projects/_run-review/YYYY-MM-DD-review.md`. **Default: integrated `up` phase** patches skills from the report Skill backlog; `scan-only` skips edits. No workstream/code changes.
+Retro over workspace + `.run-state` (not chat transcripts). **Default scope: current project** from `.run-state` bind; `/run review all` scans every project. Findings → `Projects/<projectId>/_run-review/YYYY-MM-DD-review.md`. **Default: integrated `up` phase** patches skills from the report Skill backlog; `scan-only` skips edits. No workstream/code changes.
