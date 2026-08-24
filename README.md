@@ -38,6 +38,7 @@ No control plane. No SaaS. One workspace folder. Optional Obsidian.
 
 | `/run` is | `/run` is not |
 | --- | --- |
+| An **engineering process assistant** | A general skill toolkit / hub / registry |
 | A **session-sticky** workflow skill | A hosted agent platform |
 | Durable state in **plain Markdown** | Another issue tracker you must live in |
 | Verification before `done` | “Looks good” vibes |

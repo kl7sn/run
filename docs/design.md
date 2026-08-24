@@ -2,6 +2,10 @@
 
 Public summary of the workflow. Full rules live in `skills/run/SKILL.md`.
 
+## Identity
+
+`/run` is an **engineering process assistant** (bind → advance → verify → hand off). It is **not** a general skill toolkit or hub for arbitrary local skills. Phase companions (e.g. TDD, brainstorming) and `/run review` → `up` (protocol self-maintenance) are narrow exceptions — not a registry for personal tools.
+
 ## Model
 
 1. **Project** — `Projects/<NN-slug>/project.md`

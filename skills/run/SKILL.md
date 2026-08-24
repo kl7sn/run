@@ -7,9 +7,11 @@ description: Unified workflow entry. Auto-detect phase (explore/plan/execute/rec
 
 ## Overview
 
-`/run` is the single entry for complex software work. It detects the current phase and keeps advancing until all tasks are done or a hard block is hit.
+`/run` is the **engineering process assistant** — the single entry for complex software work. It detects the current phase and keeps advancing until all tasks are done or a hard block is hit.
 
 **Goal:** advance engineering tasks automatically while enforcing verification for code quality.
+
+**Scope (keep pure):** bind → explore/plan/execute/recover → verify → hand off → optional `/run review` (protocol retro + `up` for maintaining *this* skill). `/run` is **not** a general skill toolkit, hub, or registry for arbitrary local skills (humanizer, UI, domain ops, etc.). Those stay separate; invoke them outside `/run` or by user request without routing through a run tool table.
 
 Core loop: **read state → choose phase → execute → self-review → update state → continue**
 
@@ -873,11 +875,21 @@ Severity: **high** (R02,R04,R05,R09) · **medium** (R01,R03,R07,R10) · **low** 
 
 ### Output
 
-Write report to:
+Reports live **inside the project** — not at workspace root. Create `Projects/<projectId>/_run-review/` on first write (meta folder; do not bind `.run-state` to it).
 
-```text
-<workspace>/Projects/_run-review/YYYY-MM-DD-review.md
-```
+**Report path by scope:**
+
+| Scope | Path |
+|---|---|
+| **Project** (default) | `Projects/<projectId>/_run-review/YYYY-MM-DD-review.md` |
+| **Workstream** | `Projects/<parentProjectId>/_run-review/YYYY-MM-DD-<workstreamId>-review.md` |
+| **`all`** | One report **per project** with activity in window → each `Projects/<projectId>/_run-review/YYYY-MM-DD-review.md` |
+
+**Time anchor:** for “since last review”, read the newest `*.md` in that project’s `_run-review/` (match workstream suffix when scope is a single workstream).
+
+**Legacy:** old workspace-level `Projects/_run-review/` is deprecated — do not write there; optional one-time read if migrating.
+
+After writing, reply with the **full path(s)** to the report file(s).
 
 Template:
 
@@ -924,7 +936,9 @@ Template:
 
 ### Phase 2: Skill maintenance (`up`)
 
-Run **in the same turn** after the report is written, unless invocation was `scan-only`.
+Run **in the same turn** after report(s) are written, unless invocation was `scan-only`.
+
+When `scope=all` produced multiple project reports, merge **Skill backlog** items from all reports written this turn, then run one `up` pass (append **Maintenance applied** to each report touched).
 
 Follow the personal **`up`** skill (`~/.codex/skills/up/SKILL.md` or synced copy). Inline checklist:
 
@@ -1052,7 +1066,9 @@ When `repos` lists 2+ paths: write `.code-workspace` at primary root; optional `
 
 ## Relationship to other skills
 
-`/run` is the **orchestration layer** (bind → advance → verify → hand off). Companion skills supply discipline for a phase; they **must not** own a parallel workflow, skip workspace accounting, or close a workstream.
+`/run` is the **orchestration layer** (bind → advance → verify → hand off) — process assistant only. It may **optionally** lean on a few phase-discipline skills (below) when useful. It does **not** own, catalog, or auto-dispatch a personal skill toolbox; do not add Tool registry / companions frontmatter / “integrate every useful skill into run” features.
+
+Companion skills (when used) supply discipline for a phase; they **must not** own a parallel workflow, skip workspace accounting, or close a workstream.
 
 ### Built-in defaults (superpowers / already local)
 
