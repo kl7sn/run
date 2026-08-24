@@ -6,6 +6,7 @@ project: "01.01-hello"
 status: active
 next: "[[tasks]]"
 summary: "Example workstream"
+lang: en
 updated: "2026-08-21"
 tags:
   - workstream

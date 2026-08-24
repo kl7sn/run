@@ -11,8 +11,14 @@ Public summary of the workflow. Full rules live in `skills/run/SKILL.md`.
 ## Durable state
 
 - **Workspace folder**: Markdown only. Obsidian optional.
-- **`.run-state`**: per code-repo session index (`workspace`, `project`, `projects[]`, `session_id`).
+- **`.run-state`**: per code-repo session index (`workspace`, `lang`, `project`, `projects[]`, `session_id`).
 - Prefer `~/…` or absolute paths; keep spaced paths (e.g. iCloud) consistent across all bind entries. After moving a vault, rewrite every bound repo’s state file.
+
+## Document language
+
+- `lang: en | zh` — resolve Handoff → `.run-state` → `RUN_LANG` → default `en`.
+- `/run lang` shows or sets the value. Controls durable prose + human-facing replies; enums/keys stay English.
+- Templates: `templates/*.md` (en) and `templates/*.zh.md` (zh).
 
 ## Quality
 

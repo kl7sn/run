@@ -1,6 +1,6 @@
 ---
 name: run
-description: Unified workflow entry. Auto-detect phase (explore/plan/execute/recover) with durable state in a configurable Markdown workspace folder (Obsidian optional). Supports nested projects/workstreams, /run init, /run new, /run bind, /run auto. When a repo already has a .run-state binding, follow-up engineering requests in the same session must restore the binding and update the workspace—never fall back to ad-hoc local coding. Triggers: /run, /run auto, /run init, /run new, /run bind, continue work, resume, start implementation, unattended, and follow-up code/bug/feature work on a bound repo.
+description: Unified workflow entry. Auto-detect phase (explore/plan/execute/recover) with durable state in a configurable Markdown workspace folder (Obsidian optional). Supports nested projects/workstreams, /run init, /run new, /run bind, /run lang (en|zh), /run auto. When a repo already has a .run-state binding, follow-up engineering requests in the same session must restore the binding and update the workspace—never fall back to ad-hoc local coding. Triggers: /run, /run auto, /run init, /run new, /run bind, /run lang, continue work, resume, start implementation, unattended, and follow-up code/bug/feature work on a bound repo.
 ---
 
 # /run — Unified workflow
@@ -67,6 +67,7 @@ Do **not** use the “concepts-only” exemption when the discussion changes arc
 | `/run init` [projectId] | Create **project container only** (layer 1) |
 | `/run new` [workstreamId] | Create nested **workstream** under parent (layer 2); stop by default (no auto execute) |
 | `/run bind` | Interactively rebind this session to a workstream / project / new |
+| `/run lang` [en\|zh] | Show or set **document language** for durable state + human-facing replies |
 | `/run` | Advance explore/plan/execute/recover; auto-continue when ready |
 | `/run auto` | **Unattended**: keep ready tasks flowing; design confirmation → dual-agent consensus then continue; true hard blocks stop |
 
@@ -100,10 +101,12 @@ Example `.run-state`:
 
 ```yaml
 workspace: ~/run-workspace
+lang: en
 project: 01-demo/01.01-hello
 repo: .
 ```
 
+`lang` is `en` or `zh` (see Document language).
 ## Three-layer model (project / workstream / tasks)
 
 | Layer | Entity | Workspace path | `/run` behavior |
@@ -194,6 +197,7 @@ Session index at the repo root. If a legacy `.k-state` exists and `.run-state` d
 
 ```yaml
 workspace: <workspace>/Projects/<projectId>/<workstreamId>
+lang: en | zh
 project: <workstreamId>
 repo: <primary-repo-module-path>
 binding_policy:
@@ -268,12 +272,14 @@ After choice → write `.run-state` (top-level + `projects[]`) → continue. Inf
    - `/run init` → project init protocol
    - `/run new` → new workstream protocol
    - `/run bind` → interactive bind, then stop or continue
+   - `/run lang` → document language protocol (show or set `en`/`zh`)
    - `/run auto` → recover bind, enter Auto mode, advance
-3. If `projects[]` matches `session_id` → use it and sync top-level entry
-4. If no session bind → unique candidate OK; **≥2 → interactive bind** (in auto, cannot uniquely bind → **full stop**); zero candidates → guide `/run init` or `/run new`
-5. Read bound `tasks.md` + `context.md`; homepage rules apply
-6. If this turn is `/run auto` (or Handoff `auto_mode: true` and not exited) → keep `auto_mode: true`, follow Auto rules
-7. Else route:
+3. Resolve `lang` (see Document language) and keep it for this turn’s durable writes + human-facing prose
+4. If `projects[]` matches `session_id` → use it and sync top-level entry
+5. If no session bind → unique candidate OK; **≥2 → interactive bind** (in auto, cannot uniquely bind → **full stop**); zero candidates → guide `/run init` or `/run new`
+6. Read bound `tasks.md` + `context.md`; homepage rules apply
+7. If this turn is `/run auto` (or Handoff `auto_mode: true` and not exited) → keep `auto_mode: true`, follow Auto rules
+8. Else route:
 
 | Condition | Phase |
 |---|---|
@@ -490,19 +496,20 @@ If any check fails → **protocol error**: do not wait; run dual-agent review in
 On `/run` recover/advance (including sticky engineering turns), prefix replies:
 
 ```text
-[/run · auto=on · 01-demo/01.01-hello · T03 doing]
+[/run · lang=zh · auto=on · 01-demo/01.01-hello · T03 doing]
 ```
 
 or:
 
 ```text
-[/run · auto=on · 01-demo/01.01-hello · design-review: pending]
-[/run · auto=on · 01-demo/01.01-hello · design-review: approved → plan]
-[/run · auto=off · 01-demo/01.01-hello · blocked: waiting on design approval]
+[/run · lang=en · auto=on · 01-demo/01.01-hello · design-review: pending]
+[/run · lang=en · auto=on · 01-demo/01.01-hello · design-review: approved → plan]
+[/run · lang=en · auto=off · 01-demo/01.01-hello · blocked: waiting on design approval]
 ```
 
 | Segment | Meaning |
 |---|---|
+| `lang=en` / `lang=zh` | Resolved document language (see Document language) |
 | `auto=on` / `auto=off` | Handoff `auto_mode` (default off) |
 | Path | `<projectId>/<workstreamId>` |
 | Tail | `Tn doing` / `T01+T02 doing` / `design-review: …` / `blocked: …` / `done` / `idle` |
@@ -630,6 +637,7 @@ Optional short refresh after a `done` if the session is about to end.
 - updated: <ISO-8601 or YYYY-MM-DD HH:mm>
 - workstream: <projectId>/<workstreamId>
 - parent_project: <projectId>
+- lang: en | zh
 - auto_mode: true | false
 - phase: explore | plan | execute
 - review_status: good | revise | blocked | escalate
@@ -658,6 +666,7 @@ Rules:
 - Single source of runtime truth; keep bounded—link out to tasks/spec/log; never paste whole chats
 - Never store secrets/cookies/tokens/real UUIDs
 - Migrate legacy current-status sections into Handoff then delete them
+- Keep `lang` in sync with `.run-state` (repo default) when the workstream follows the repo setting
 - `status: closed` ends the wave only after the **integration gate** (smoke + worktree disposition) — **do not reopen** for new durable work; use `/run new` (or bind another active workstream) and optionally wikilink the closed line
 
 ### Gotchas (optional, recommended)
@@ -743,7 +752,8 @@ Only when task decomposition is fully invalidated, return to plan and rewrite `t
 3. Create folder + `project.md` from `templates/project.md`
 4. Do **not** create workstream `tasks.md` here
 5. Optionally bind `.run-state` to the project folder (browse only); tell user next is `/run new`
-6. **Stop by default**
+6. If `.run-state` has no `lang`, ask once: `en` or `zh` (or use `RUN_LANG` / default `en`); write `lang:` into `.run-state`
+7. **Stop by default**
 
 If a project already exists and user says init → use `/run new`.
 
@@ -753,12 +763,23 @@ If a project already exists and user says init → use `/run new`.
 2. Parse parent `NN`; ask about migrating unnumbered parents if needed
 3. Allocate `NN.MM-<slug>`
 4. Path under parent; if exists → offer `/run bind`
-5. Create `workstream.md` from template
-6. Empty `tasks.md` / `context.md` with Handoff + Gotchas; `spec.md` optional later
+5. Create `workstream.md` from template (match resolved `lang`)
+6. Create empty `tasks.md` / `context.md` with Handoff + Gotchas using the **resolved lang** (section titles and table headers); put `lang:` in Handoff; `spec.md` optional later
 7. Append parent “Workstreams” table link
-8. Point this session’s `.run-state` at the new workstream
+8. Point this session’s `.run-state` at the new workstream; ensure top-level `lang` is set
 9. **Do not auto-execute** by default; ask whether to `/run` now
 10. **Orphan check:** if this repo already has worktrees from sibling workstreams (`worktree_status: active|smoke_pending`), list them and recommend smoke / merge / prune before allocating another worktree
+
+## Document language protocol (`/run lang`)
+
+1. Resolve current `lang` (see Document language · resolution)
+2. `/run lang` with no args → report current value and source (`.run-state` / Handoff / env / default)
+3. `/run lang en` or `/run lang zh` (aliases: `english`/`中文`/`cn`→`zh`):
+   - Write `.run-state` top-level `lang:`
+   - If a workstream is bound and Handoff is `open`, set Handoff `lang:` to the same value
+   - **Do not** bulk-translate existing historical Markdown; only **new** durable writes and human-facing replies use the new lang
+   - Confirm with status line `lang=…`
+4. Invalid value → ask `en` or `zh`; do not guess
 
 ## Recover protocol
 
@@ -813,6 +834,7 @@ created: <date>
 - updated: <date-time>
 - workstream: <projectId>/<workstreamId>
 - parent_project: <projectId>
+- lang: en | zh
 - auto_mode: true | false
 - phase: explore | plan | execute
 - review_status: good | revise | blocked | escalate
@@ -857,4 +879,39 @@ When `repos` lists 2+ paths: write `.code-workspace` at primary root; optional `
 
 ## Document language
 
-Durable-state files default to **English**. Keep code identifiers, APIs, and machine status values in English.
+`/run` supports **`en`** and **`zh`** for durable-state prose and human-facing replies. Machine literals stay English.
+
+### Resolution (high → low)
+
+1. Bound workstream Handoff `lang:` (if set)
+2. Code repo `.run-state` top-level `lang:`
+3. Env `RUN_LANG` (`en` or `zh`)
+4. Default: `en`
+
+On `/run init` / first bind when unset → ask once, then persist to `.run-state`. Change later with `/run lang en|zh`.
+
+### What `lang` controls
+
+| Surface | `en` | `zh` |
+|---|---|---|
+| Human-facing chat (status explanations, Handoff summaries) | English | 中文 |
+| Durable prose in `tasks.md` / `context.md` / `spec.md` / design docs written by `/run` | English | 中文 |
+| `tasks.md` column headers | `ID \| Task \| Status \| Depends \| Blocker \| Acceptance` | `ID \| 任务 \| 状态 \| 依赖 \| 阻塞 \| 验收条件` |
+| `context.md` section titles | `## Handoff` / `## Gotchas` / `## Key Decisions` / `## Execution Log` | `## Handoff` / `## Gotchas` / `## 关键决策` / `## 执行日志` |
+| Status / task enums, YAML keys, paths, APIs, commits | English literals | English literals (unchanged) |
+| Status line `/run · lang=…` | always include | always include |
+
+Keep `## Handoff` and `## Gotchas` headings in English in both modes so recover parsers stay stable. Translate only the Key Decisions / Execution Log headings (and table headers) when `lang: zh`.
+
+### Switching
+
+- `/run lang` — show current lang + source
+- `/run lang zh` / `/run lang en` — set repo default; update open Handoff `lang:` if bound
+- Do **not** rewrite historical entries when switching; new writes follow the new lang
+- Mixed files are OK (old English rows + new Chinese rows) until the user asks to normalize
+
+### Templates
+
+- `templates/project.md` / `templates/workstream.md` — English base; when `lang: zh`, fill new files with Chinese body text and zh `tasks.md` headers (see examples)
+- Skill protocol file itself stays English (this `SKILL.md`); product READMEs remain `README.md` + `README_CN.md`
+

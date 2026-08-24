@@ -107,7 +107,7 @@ State lives in a normal directory. Obsidian is optional.
 ```
 
 Minimal sample: [`examples/01-demo/`](examples/01-demo/).  
-Templates: [`templates/`](templates/).
+Templates: [`templates/`](templates/) (`*.md` English, `*.zh.md` Chinese). Set language with `/run lang en|zh`.
 
 ---
 
@@ -118,19 +118,21 @@ Templates: [`templates/`](templates/).
 | `/run init` | Create the project container |
 | `/run new` | Nest a workstream under the project |
 | `/run bind` | Rebind this session interactively |
+| `/run lang` [en\|zh] | Show or set document language |
 | `/run` | Advance explore → plan → execute |
 | `/run auto` | Unattended advance |
 
 Status line (every advancing reply):
 
 ```text
-[/run · auto=off · 01-demo/01.01-hello · T01 ready]
+[/run · lang=en · auto=off · 01-demo/01.01-hello · T01 ready]
 ```
 
 Repo index (git root):
 
 ```yaml
 workspace: ~/run-workspace
+lang: en
 project: 01.01-hello
 repo: .
 ```

@@ -118,19 +118,21 @@ cd run
 | `/run init` | 建项目容器 |
 | `/run new` | 在项目下建 workstream |
 | `/run bind` | 交互重绑本会话 |
+| `/run lang` [en\|zh] | 查看或设置文档语言 |
 | `/run` | 推进 explore → plan → execute |
 | `/run auto` | 无人值守推进 |
 
 状态行（每次推进回复开头）：
 
 ```text
-[/run · auto=off · 01-demo/01.01-hello · T01 ready]
+[/run · lang=zh · auto=off · 01-demo/01.01-hello · T01 ready]
 ```
 
 代码仓索引（git 根目录）：
 
 ```yaml
 workspace: ~/run-workspace
+lang: zh
 project: 01.01-hello
 repo: .
 ```

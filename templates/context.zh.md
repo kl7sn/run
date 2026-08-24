@@ -1,12 +1,12 @@
 ## Handoff
 
 - status: open
-- updated: 2026-08-21
-- workstream: 01-demo/01.01-hello
-- parent_project: 01-demo
-- lang: en
+- updated: "{{date}}"
+- workstream: "{{parent}}/{{project}}"
+- parent_project: "{{parent}}"
+- lang: zh
 - auto_mode: false
-- phase: plan
+- phase: explore
 - review_status: good
 - parallel_wave: false
 - current_tasks: []
@@ -14,7 +14,7 @@
 - blocker: none
 - open_questions: []
 - failed_approaches: []
-- next_action: `/run` to plan or execute T01
+- next_action: `/run` 进入 explore / plan
 - resume_hint: `/run`
 - key_paths: []
 - worktree_path: none
@@ -22,14 +22,10 @@
 - worktree_status: none
 - smoke_status: pending
 - integration_next: none
-- notes: example workstream
+- notes:
 
 ## Gotchas
 
-- Example only: replace with real long-lived constraints for your project.
+## 关键决策
 
-## Key Decisions
-
-- 2026-08-21: created example workstream for kl7sn/run docs.
-
-## Execution Log
+## 执行日志

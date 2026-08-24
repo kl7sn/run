@@ -5,6 +5,7 @@ parent: ""
 project: "01-demo"
 status: active
 summary: "Example project container"
+lang: en
 updated: "2026-08-21"
 tags:
   - project

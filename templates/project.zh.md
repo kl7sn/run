@@ -7,7 +7,7 @@ status: active
 blocked: false
 summary: ""
 repos: []
-lang: "{{lang}}"
+lang: "zh"
 updated: "{{date}}"
 tags:
   - project
@@ -15,17 +15,17 @@ tags:
 
 # {{title}}
 
-Project container for `/run`. Create with `/run init`.
+`/run` 项目容器。用 `/run init` 创建。
 
-## Workstreams
+## 下属任务包
 
-| Workstream | Notes |
+| 任务包 | 备注 |
 | --- | --- |
 | | |
 
-> Link example: `[[01.01-hello/workstream]]`
+> 链接示例：`[[01.01-hello/workstream]]`
 
-## Repos
+## 仓库
 
 | ID | path |
 | --- | --- |
