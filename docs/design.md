@@ -49,3 +49,7 @@ Public summary of the workflow. Full rules live in `skills/run/SKILL.md`.
 ## Companion skills
 
 `/run` orchestrates; it does not replace phase disciplines. Default to local superpowers (`brainstorming`, `writing-plans`, `tdd`, `systematic-debugging`, `verification-before-completion`). Optionally cherry-pick from [mattpocock/skills](https://github.com/mattpocock/skills) (`grill-with-docs`, `to-tickets`, `code-review`) — never dual-run their `handoff`/`implement` or a full pack that moves durable state out of the workspace.
+
+## Review (`/run review`)
+
+Read-only retro over workspace + `.run-state` (not chat transcripts). Heuristic findings → `Projects/_run-review/YYYY-MM-DD-review.md`. **Land skill changes with personal `up` skill** — review finds, `up` patches.

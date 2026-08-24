@@ -889,7 +889,19 @@ Rules:
 - `/run review` is **meta** — not a substitute for `/run` on an active line
 - Run from any repo with `.run-state`, or with `RUN_WORKSPACE` set
 - Safe to run in a **fresh session** (no workstream bind required)
-- After report, user decides: edit `skills/run/SKILL.md`, fix a specific workstream on next `/run`, or ignore
+- After report, user decides: fix a specific workstream on next `/run`, or maintain skills (see **`up`** below)
+
+### Skill maintenance handoff (`up`)
+
+`/run review` **finds** protocol gaps; it does **not** edit `skills/run/SKILL.md`.
+
+To land improvements:
+
+1. Read `Projects/_run-review/YYYY-MM-DD-review.md` → **Skill backlog** section
+2. Invoke the personal **`up`** skill with that report (or paste findings)
+3. `up` applies patches: prefer strengthening `skills/run/SKILL.md` first; sync `~/.cursor/skills/run` + `~/.codex/skills/run` + `~/.claude/skills/run` after changes
+
+For protocol findings (R01–R10), treat workspace evidence in the review report as authoritative over chat narrative.
 
 ## Recover protocol
 
@@ -1021,7 +1033,14 @@ Composable engineering skills. **Cherry-pick 2–3**; do **not** install the who
 
 **Invocation rule:** parent `/run` may invoke a companion for the current phase; the companion returns results to the parent; **only the parent** updates `.run-state`, `tasks.md`, and `context.md`.
 
-## Document language
+### Meta maintenance (`up`)
+
+| When | Skill | Role |
+|---|---|---|
+| After `/run review` or a finished thread | `up` | Turn durable findings into skill patches (prefer existing skills; sync Cursor/Codex/Claude roots) |
+
+Recommended loop: **`/run review` → read report → `up` → patch `skills/run/SKILL.md`**. `up` does not replace `/run review` heuristics and does not advance workstreams.
+
 
 `/run` supports **`en`** and **`zh`** for durable-state prose and human-facing replies. Machine literals stay English.
 
