@@ -107,7 +107,7 @@ cd run
 ```
 
 示例：[`examples/01-demo/`](examples/01-demo/)  
-模板：[`templates/`](templates/)
+模板：[`templates/`](templates/)（`*.md` 英文，`*.zh.md` 中文）。用 `/run lang en|zh` 切换文档语言。
 
 ---
 

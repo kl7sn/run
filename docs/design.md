@@ -45,3 +45,7 @@ Public summary of the workflow. Full rules live in `skills/run/SKILL.md`.
 `context.md` uses **`## Handoff` as the only runtime section** (no separate “Current status”). Optional `## Gotchas` for long-lived constraints; `## Key Decisions` for decision history; `## Execution Log` for evidence.
 
 `status: closed` ends the workstream. New durable work must **not** reopen it — `/run new` under the parent (or bind another active line). Binding a closed line while needing tasks/decisions/code is an abnormal bind / hard block.
+
+## Companion skills
+
+`/run` orchestrates; it does not replace phase disciplines. Default to local superpowers (`brainstorming`, `writing-plans`, `tdd`, `systematic-debugging`, `verification-before-completion`). Optionally cherry-pick from [mattpocock/skills](https://github.com/mattpocock/skills) (`grill-with-docs`, `to-tickets`, `code-review`) — never dual-run their `handoff`/`implement` or a full pack that moves durable state out of the workspace.

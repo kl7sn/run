@@ -875,7 +875,39 @@ When `repos` lists 2+ paths: write `.code-workspace` at primary root; optional `
 
 ## Relationship to other skills
 
-`/run` orchestrates: `brainstorming`, `test-driven-development` (when applicable), `systematic-debugging`, **always** `verification-before-completion` before done, `using-git-worktrees` when applicable.
+`/run` is the **orchestration layer** (bind → advance → verify → hand off). Companion skills supply discipline for a phase; they **must not** own a parallel workflow, skip workspace accounting, or close a workstream.
+
+### Built-in defaults (superpowers / already local)
+
+| Phase | Prefer | Notes |
+|---|---|---|
+| Explore | `brainstorming` | Align before design artifacts |
+| Plan | `writing-plans` | Decompose into `tasks.md` rows |
+| Execute | `test-driven-development`, `systematic-debugging` | When applicable |
+| Pre-done | **always** `verification-before-completion` | Required for `doing → done` |
+| Isolation | `using-git-worktrees` | Prefer when spawning code-changing subagents |
+
+### Optional companions ([mattpocock/skills](https://github.com/mattpocock/skills))
+
+Composable engineering skills. **Cherry-pick 2–3**; do **not** install the whole pack alongside an existing superpowers set (duplicate triggers). Do **not** run `setup-matt-pocock-skills` if it would move durable state into a separate issue-tracker workflow — keep authority in workspace `tasks.md` / `context.md`.
+
+| `/run` phase | Optional skill | Use for | Skip if you already have |
+|---|---|---|---|
+| Explore | `grill-with-docs` | Shared domain language (`CONTEXT.md`) + ADRs while grilling | `brainstorming` alone is enough for small scopes |
+| Explore / plan | `to-spec` | Turn an already-aligned chat into a written spec | Spec already written under `/run` explore |
+| Plan | `to-tickets` | Break work into tracer tickets with blocking edges | Prefer writing edges into `tasks.md` Depends/Blocker columns |
+| Execute | `tdd` | Red-green-refactor loop at agreed seams | `test-driven-development` |
+| Execute | `diagnosing-bugs` | Phased diagnosis (feedback → minimise → hypothesise → fix) | `systematic-debugging` |
+| Pre-done / design-review | `code-review` | Parallel Standards + Spec review subagents | Dual-agent design-review already covers design gates; still useful for post-diff review |
+| Architecture health | `improve-codebase-architecture` | Periodic deepening survey (not a rescue) | Outside a bound workstream → open `/run new` first |
+
+**Do not install / do not dual-run**
+
+- Their `handoff` skill — superseded by `context.md` → `## Handoff`
+- Their `implement` as a second entry — `/run` owns claiming tasks and writing workspace
+- Full pack + `setup-matt-pocock-skills` that rebinds docs/tickets away from the workspace folder
+
+**Invocation rule:** parent `/run` may invoke a companion for the current phase; the companion returns results to the parent; **only the parent** updates `.run-state`, `tasks.md`, and `context.md`.
 
 ## Document language
 

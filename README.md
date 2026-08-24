@@ -139,6 +139,18 @@ repo: .
 
 ---
 
+## Companion skills
+
+`/run` orchestrates. Phase skills stay optional and composable:
+
+- **Defaults:** local superpowers (`brainstorming`, `writing-plans`, TDD, debugging, `verification-before-completion`)
+- **Optional cherry-picks:** [mattpocock/skills](https://github.com/mattpocock/skills) — e.g. `grill-with-docs`, `to-tickets`, `code-review`
+- **Do not** dual-run their `handoff` / `implement`, or install the whole pack if it duplicates what you already have
+
+Phase mapping lives in [`skills/run/SKILL.md`](skills/run/SKILL.md) → Relationship to other skills.
+
+---
+
 ## Protocol depth
 
 The README is the front door. The skill is the law.
