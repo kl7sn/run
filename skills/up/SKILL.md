@@ -1,6 +1,6 @@
 ---
 name: up
-description: Use when reviewing a finished work thread for durable skill improvements, overlapping scope, missing reusable knowledge, or a skill name that no longer matches its actual responsibility. Also runs as phase 2 of `/run review` (default) to patch skills from the report Skill backlog. Packaged with kl7sn/run — maintained alongside the `/run` skill. Triggers: up, skill maintenance, 复盘 skill, maintain skills, /run review (phase 2).
+description: "Use when reviewing a finished work thread for durable skill improvements, overlapping scope, missing reusable knowledge, or a skill name that no longer matches its actual responsibility. Also runs as phase 2 of `/run review` (default) to patch skills from the report Skill backlog. Packaged with kl7sn/run — maintained alongside the `/run` skill. Triggers: up, skill maintenance, 复盘 skill, maintain skills, /run review (phase 2)."
 ---
 
 # Up
@@ -174,19 +174,12 @@ If multiple existing skills could absorb the finding, draft only one primary pat
 
 ## Cursor/Codex Sync Rule
 
-After changing `skills/run` or `skills/up` in the `kl7sn/run` checkout (or applying patches via this skill), sync to agent roots. Prefer `./install.sh all` from the repo (symlinks). If using copies instead of symlinks, keep these roots consistent:
+After changing `skills/run` or `skills/up` in the `kl7sn/run` checkout (or applying patches via this skill), sync to agent roots:
 
-- `~/.cursor/skills/{run,up}`
-- `~/.claude/skills/{run,up}`
-- `~/.codex/skills/{run,up}`
-- `~/.agents/skills/{run,up}` (when used)
-
-Required workflow:
-
-1. Prefer editing the canonical files under the `kl7sn/run` repo `skills/` tree.
-2. Re-run `install.sh` or copy/sync so all agent roots match the repo.
-3. After patching, verify the changed files exist and summarize which roots were updated.
-4. If a root still has an old personal copy of `up` (not a symlink to this package), replace it with the packaged skill.
+1. Prefer editing the canonical files under the `kl7sn/run` repo `skills/` tree, then commit/push.
+2. End users: `npx skills update` (or re-run `npx skills add kl7sn/run -g -y`).
+3. Contributors with a clone: `./install.sh all` (symlinks) or copy into `~/.cursor|claude|codex|agents/skills/{run,up}`.
+4. If a root still has an old personal copy of `up` (not from this package), replace it with the packaged skill.
 
 Do not silently update only one root for `run` / `up`. Skill drift between agents should be treated as a maintenance issue.
 

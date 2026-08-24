@@ -28,6 +28,7 @@ No control plane. No SaaS. One workspace folder. Optional Obsidian.
 <br>
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-0a0a0a?style=flat-square)](LICENSE)
+[![skills.sh](https://skills.sh/b/kl7sn/run)](https://skills.sh/kl7sn/run)
 [![Agents](https://img.shields.io/badge/agents-Cursor%20·%20Claude%20·%20Codex-111111?style=flat-square)](#install)
 [![State](https://img.shields.io/badge/state-Markdown%20workspace-222222?style=flat-square)](#workspace)
 [![中文](https://img.shields.io/badge/docs-%E4%B8%AD%E6%96%87-333333?style=flat-square)](README_CN.md)
@@ -66,28 +67,30 @@ Built for people who already use agents daily — and keep losing the thread bet
 
 ## Install
 
+Primary (same as [skills.sh](https://skills.sh) / matt / vercel packs):
+
+```bash
+npx skills add kl7sn/run -g
+```
+
+That installs packaged **`run`** + **`up`** into your agent skill directories. Useful flags:
+
+```bash
+npx skills add kl7sn/run -g -y              # non-interactive
+npx skills add kl7sn/run -g -a cursor       # Cursor only
+npx skills add kl7sn/run --list             # preview skills in the repo
+npx skills update                           # refresh installed skills later
+```
+
+Browse / badge: [skills.sh/kl7sn/run](https://skills.sh/kl7sn/run)
+
+### Optional: clone for contributors
+
 ```bash
 git clone https://github.com/kl7sn/run.git
 cd run
+./install.sh all    # symlink run+up into cursor/claude/codex/agents
 ```
-
-Symlink both packaged skills into your agent:
-
-| Agent | Command |
-| --- | --- |
-| **Cursor** | `./install.sh cursor` |
-| **Claude Code** | `./install.sh claude` |
-| **Codex** | `./install.sh codex` |
-| **All (+ `.agents`)** | `./install.sh all` |
-
-Manual equivalent:
-
-```bash
-ln -sfn "$(pwd)/skills/run" ~/.cursor/skills/run
-ln -sfn "$(pwd)/skills/up"  ~/.cursor/skills/up
-```
-
-Installs **`run`** (process) and **`up`** (skill maintenance for `/run review`).
 
 Then in a repo: `/run init` → `/run new` → `/run`.
 

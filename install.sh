@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Contributor helper: symlink skills/run + skills/up into agent dirs.
+# End users should prefer: npx skills add kl7sn/run -g
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 

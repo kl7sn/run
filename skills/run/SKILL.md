@@ -1,6 +1,6 @@
 ---
 name: run
-description: Unified workflow entry. Auto-detect phase (explore/plan/execute/recover) with durable state in a configurable Markdown workspace folder (Obsidian optional). Supports nested projects/workstreams, /run init, /run new, /run bind, /run lang (en|zh), /run review, /run auto. When a repo already has a .run-state binding, follow-up engineering requests in the same session must restore the binding and update the workspace—never fall back to ad-hoc local coding. Triggers: /run, /run auto, /run init, /run new, /run bind, /run lang, /run review, continue work, resume, start implementation, unattended, and follow-up code/bug/feature work on a bound repo.
+description: "Unified workflow entry. Auto-detect phase (explore/plan/execute/recover) with durable state in a configurable Markdown workspace folder (Obsidian optional). Supports nested projects/workstreams, /run init, /run new, /run bind, /run lang (en|zh), /run review, /run auto. When a repo already has a .run-state binding, follow-up engineering requests in the same session must restore the binding and update the workspace—never fall back to ad-hoc local coding. Triggers: /run, /run auto, /run init, /run new, /run bind, /run lang, /run review, continue work, resume, start implementation, unattended, and follow-up code/bug/feature work on a bound repo."
 ---
 
 # /run — Unified workflow

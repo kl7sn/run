@@ -66,28 +66,30 @@ Agent 擅长写代码。它们不擅长：**记住做到哪了**、**证明做�
 
 ## 安装
 
+主流方式（与 [skills.sh](https://skills.sh) / matt 等包相同）：
+
+```bash
+npx skills add kl7sn/run -g
+```
+
+会安装包内的 **`run`** + **`up`**。常用参数：
+
+```bash
+npx skills add kl7sn/run -g -y              # 非交互
+npx skills add kl7sn/run -g -a cursor       # 仅 Cursor
+npx skills add kl7sn/run --list             # 预览仓库内 skill
+npx skills update                           # 之后更新已安装 skill
+```
+
+浏览 / 徽章：[skills.sh/kl7sn/run](https://skills.sh/kl7sn/run)
+
+### 可选：贡献者本地 clone
+
 ```bash
 git clone https://github.com/kl7sn/run.git
 cd run
+./install.sh all
 ```
-
-软链到各端：
-
-| Agent | 命令 |
-| --- | --- |
-| **Cursor** | `./install.sh cursor` |
-| **Claude Code** | `./install.sh claude` |
-| **Codex** | `./install.sh codex` |
-| **全部（含 `.agents`）** | `./install.sh all` |
-
-手动等价：
-
-```bash
-ln -sfn "$(pwd)/skills/run" ~/.cursor/skills/run
-ln -sfn "$(pwd)/skills/up"  ~/.cursor/skills/up
-```
-
-安装 **`run`**（流程）与 **`up`**（`/run review` 的 skill 维护）。或使用 [`install.sh`](install.sh)。
 
 然后在仓库里：`/run init` → `/run new` → `/run`。
 
