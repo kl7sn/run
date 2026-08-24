@@ -1,6 +1,6 @@
 ---
 name: run
-description: Unified workflow entry. Auto-detect phase (explore/plan/execute/recover) with durable state in a configurable Markdown workspace folder (Obsidian optional). Supports nested projects/workstreams, /run init, /run new, /run bind, /run lang (en|zh), /run auto. When a repo already has a .run-state binding, follow-up engineering requests in the same session must restore the binding and update the workspace—never fall back to ad-hoc local coding. Triggers: /run, /run auto, /run init, /run new, /run bind, /run lang, continue work, resume, start implementation, unattended, and follow-up code/bug/feature work on a bound repo.
+description: Unified workflow entry. Auto-detect phase (explore/plan/execute/recover) with durable state in a configurable Markdown workspace folder (Obsidian optional). Supports nested projects/workstreams, /run init, /run new, /run bind, /run lang (en|zh), /run review, /run auto. When a repo already has a .run-state binding, follow-up engineering requests in the same session must restore the binding and update the workspace—never fall back to ad-hoc local coding. Triggers: /run, /run auto, /run init, /run new, /run bind, /run lang, /run review, continue work, resume, start implementation, unattended, and follow-up code/bug/feature work on a bound repo.
 ---
 
 # /run — Unified workflow
@@ -68,6 +68,7 @@ Do **not** use the “concepts-only” exemption when the discussion changes arc
 | `/run new` [workstreamId] | Create nested **workstream** under parent (layer 2); stop by default (no auto execute) |
 | `/run bind` | Interactively rebind this session to a workstream / project / new |
 | `/run lang` [en\|zh] | Show or set **document language** for durable state + human-facing replies |
+| `/run review` [window] | **Read-only retro**: scan workspace artifacts for protocol violations and improvement candidates |
 | `/run` | Advance explore/plan/execute/recover; auto-continue when ready |
 | `/run auto` | **Unattended**: keep ready tasks flowing; design confirmation → dual-agent consensus then continue; true hard blocks stop |
 
@@ -273,6 +274,7 @@ After choice → write `.run-state` (top-level + `projects[]`) → continue. Inf
    - `/run new` → new workstream protocol
    - `/run bind` → interactive bind, then stop or continue
    - `/run lang` → document language protocol (show or set `en`/`zh`)
+   - `/run review` → retro protocol (read-only; stop after report unless user asks to fix)
    - `/run auto` → recover bind, enter Auto mode, advance
 3. Resolve `lang` (see Document language) and keep it for this turn’s durable writes + human-facing prose
 4. If `projects[]` matches `session_id` → use it and sync top-level entry
@@ -781,6 +783,114 @@ If a project already exists and user says init → use `/run new`.
    - Confirm with status line `lang=…`
 4. Invalid value → ask `en` or `zh`; do not guess
 
+## Review protocol (`/run review` — read-only retro)
+
+**Purpose:** evaluate whether `/run` protocol held up over a time window, using **bounded durable artifacts only** — not full agent chat transcripts. Output is a human-facing improvement backlog for skill/protocol edits. **Does not** auto-modify `SKILL.md`, workspace state, or code unless the user explicitly asks after reading the report.
+
+### Invocation
+
+```text
+/run review              # default window: since yesterday (local calendar day)
+/run review yesterday
+/run review 7d
+/run review 2026-08-20..2026-08-24
+/run review 01-shimocli/01.04-empty-paragraph-projection   # single workstream
+```
+
+Status line prefix:
+
+```text
+[/run · review · lang=en · workspace · 3 workstreams · 2 findings]
+```
+
+### Data sources (authoritative)
+
+Scan only:
+
+1. **Workspace** under resolved `RUN_WORKSPACE` / `.run-state` `workspace` root → `Projects/**/{tasks,context,workstream,project}.md`
+2. **Repo** `.run-state` / legacy `.k-state` (all entries in `projects[]`)
+3. **Optional corroboration:** `git worktree list` in bound repos (orphan / drift vs Handoff `worktree_path`)
+
+**Do not** scrape Cursor/Claude/Codex session exports by default. If the user pastes a transcript excerpt, treat it as **supplemental evidence** only — workspace wins on conflict.
+
+### Time window
+
+- Default: **previous local calendar day 00:00 → now** (or “since last `/run review` report” if one exists under `Projects/_run-review/`)
+- Filter workstreams by `Handoff updated`, `Execution Log` dates, `.run-state projects[].note`, or file `mtime` inside the window
+- Include workstreams with **any** activity in window, even if created earlier
+
+### Heuristic rules (check each hit workstream)
+
+| ID | Signal | Likely protocol gap | Suggested action |
+|---|---|---|---|
+| R01 | `auto_mode: true` in Handoff or status line, and Execution Log / chat summary mentions 确认/继续/confirm/continue to pass design | Auto design-gate leak | Strengthen design-gate preflight; add `protocol-correction` if missing |
+| R02 | All tasks `done` + `Handoff status: closed` while `smoke_status: pending` or `worktree_status: active\|smoke_pending` | Integration gate skipped | Enforce close checklist; reopen is forbidden — note for **future** lines |
+| R03 | Closed workstream + sibling `/run new` within 48h on same parent (note in Key Decisions / new workstream links closed line) | Premature close | Recommend smoke before close; reuse branch/worktree |
+| R04 | `Handoff` vs `tasks.md` conflict (e.g. `current_tasks` vs no `doing`, or `last_completed` not `done`) | Recover / single-writer breach | Hard-block pattern; fix Handoff on next `/run` |
+| R05 | Multiple `doing` without `parallel_wave: true` or Execution Log parallel-wave note | Illegal multi-doing | Converge tasks; record wave in Handoff |
+| R06 | `protocol-correction:` lines in Execution Log | Known violation occurred | Count frequency; prioritize skill edit |
+| R07 | `worktree_path` set but path missing on disk, or `git worktree list` shows unregistered trees for this repo | Orphan worktree | merge / prune / update Handoff |
+| R08 | `.run-state status: completed` but Handoff still `status: open` (or reverse) | State index drift | Sync on next bind |
+| R09 | Durable engineering work described in Execution Log with no matching task row | Session sticky skip | Backfill policy reminder |
+| R10 | `design-review: pending` in logs with no following `verdict=approve\|revise\|escalate` line | Incomplete auto gate | Finish dual-agent review or escalate |
+
+Severity: **high** (R02,R04,R05,R09) · **medium** (R01,R03,R07,R10) · **low** (R06,R08 — unless repeated).
+
+### Output
+
+Write report to:
+
+```text
+<workspace>/Projects/_run-review/YYYY-MM-DD-review.md
+```
+
+Template:
+
+```markdown
+# /run review — YYYY-MM-DD
+
+- window: <range>
+- workspace: <path>
+- repos scanned: <list>
+- workstreams in window: <count>
+
+## Summary
+
+- high: N · medium: N · low: N
+- top themes: <bullets>
+
+## Findings
+
+### [R02 high] 01-shimocli/01.03-mixed-rdoc-edit
+
+- evidence: context.md Handoff `smoke_status: pending`, `status: closed`
+- impact: follow-up defect forced `/run new` (01.04)
+- suggested skill change: integration gate — block close until smoke passed
+
+## Workstreams touched
+
+| workstream | last activity | open/closed | findings |
+|---|---|---|---|
+
+## Skill backlog (human triage)
+
+- [ ] <action item → skills/run/SKILL.md section>
+```
+
+Rules:
+
+- **Read-only** this turn: no task claims, no Handoff edits, no auto skill commits
+- Reply with scannable summary + path to report file
+- If zero workstreams in window → say so; suggest widening window or confirming workspace path
+- Repeat findings across reviews → bump priority in Summary
+
+### Relationship to execution
+
+- `/run review` is **meta** — not a substitute for `/run` on an active line
+- Run from any repo with `.run-state`, or with `RUN_WORKSPACE` set
+- Safe to run in a **fresh session** (no workstream bind required)
+- After report, user decides: edit `skills/run/SKILL.md`, fix a specific workstream on next `/run`, or ignore
+
 ## Recover protocol
 
 When `/run` resumes or sticky engineering continues:
@@ -893,13 +1003,15 @@ Composable engineering skills. **Cherry-pick 2–3**; do **not** install the who
 
 | `/run` phase | Optional skill | Use for | Skip if you already have |
 |---|---|---|---|
-| Explore | `grill-with-docs` | Shared domain language (`CONTEXT.md`) + ADRs while grilling | `brainstorming` alone is enough for small scopes |
+| Explore | `grill-with-docs` (+ deps `grilling`, `domain-modeling`) | Shared domain language (`CONTEXT.md`) + ADRs while grilling | `brainstorming` alone is enough for small scopes |
 | Explore / plan | `to-spec` | Turn an already-aligned chat into a written spec | Spec already written under `/run` explore |
 | Plan | `to-tickets` | Break work into tracer tickets with blocking edges | Prefer writing edges into `tasks.md` Depends/Blocker columns |
 | Execute | `tdd` | Red-green-refactor loop at agreed seams | `test-driven-development` |
 | Execute | `diagnosing-bugs` | Phased diagnosis (feedback → minimise → hypothesise → fix) | `systematic-debugging` |
 | Pre-done / design-review | `code-review` | Parallel Standards + Spec review subagents | Dual-agent design-review already covers design gates; still useful for post-diff review |
 | Architecture health | `improve-codebase-architecture` | Periodic deepening survey (not a rescue) | Outside a bound workstream → open `/run new` first |
+
+**Recommended local cherry-pick (when installed):** `grill-with-docs` + `grilling` + `domain-modeling`, `code-review`, `to-tickets`. Parent `/run` invokes them by phase; ticket edges still land in workspace `tasks.md` unless the user asks for a tracker.
 
 **Do not install / do not dual-run**
 
