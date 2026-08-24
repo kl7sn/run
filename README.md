@@ -1,181 +1,183 @@
-# `/run`
+# /run
 
-### Durable execution for coding agents
-
-Agents are good at writing code. They are bad at **remembering where they left off**, **proving work is done**, and **not quietly abandoning the plan**.
-
-`/run` is a skill protocol for Cursor, Claude Code, and Codex that turns multi-step engineering into a recoverable loop:
-
-**bind a workstream → keep state in Markdown → verify before done → hand off cleanly.**
-
-No control plane. No SaaS. One workspace folder. Optional Obsidian.
-
-<br>
-
-```text
-  ┌─────────────────────────────────────────────────────────────┐
-  │  project          workstream           tasks                │
-  │  01-demo/    →    01.01-hello/    →    T01 · T02 · T03…     │
-  │  project.md       workstream.md        tasks.md             │
-  │                   context.md           Handoff · evidence   │
-  └─────────────────────────────────────────────────────────────┘
-                         ▲
-                         │  .run-state  (session bind in the git repo)
-                         │
-                    your codebase
-```
-
-<br>
+> Durable execution for coding agents. Bind a workstream, keep state in Markdown, verify before `done`, and resume from a bounded Handoff — not from yesterday's chat.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![Install](https://img.shields.io/badge/install-npx%20skills-6366f1?style=flat-square)](https://skills.sh/kl7sn/run)
-[![Agents](https://img.shields.io/badge/agents-Cursor%20·%20Claude%20·%20Codex-555?style=flat-square)](#install)
+[![Agents](https://img.shields.io/badge/agents-Cursor%20%7C%20Claude%20%7C%20Codex-555?style=flat-square)](#supported-agents)
 [![State](https://img.shields.io/badge/state-Markdown%20workspace-lightgrey?style=flat-square)](#workspace)
 [![中文](https://img.shields.io/badge/docs-中文-informational?style=flat-square)](README_CN.md)
 
----
+Skills follow the [Agent Skills](https://agentskills.io/) format and install via [skills.sh](https://skills.sh).
 
-## Positioning
+## What it is
 
-| `/run` is | `/run` is not |
-| --- | --- |
-| An **engineering process assistant** | A general skill toolkit / hub / registry |
-| A **session-sticky** workflow skill | A hosted agent platform |
-| Durable state in **plain Markdown** | Another issue tracker you must live in |
-| Verification before `done` | “Looks good” vibes |
-| Unattended advance with hard stops | Blind overnight force-push |
+`/run` is an **engineering process assistant** — a skill protocol for Cursor, Claude Code, and Codex.
 
-Built for people who already use agents daily — and keep losing the thread between chats, tools, and weekends.
+It turns multi-step work into a recoverable loop:
 
----
+```text
+bind workstream → explore / plan / execute → verify → hand off → continue
+```
 
-## Core ideas
+Durable state lives in a **Markdown workspace** (Obsidian optional). Each git repo keeps a small `.run-state` index for session binding. No control plane. No SaaS.
 
-**Three layers.** Project → workstream → fine tasks. The workstream is the execution unit; the project is the container.
+## Why it exists
 
-**Single writer.** Parallel subagents may change code (preferably in worktrees). Only the parent `/run` writes state files. **Human smoke** on the worktree is required before closing a line — automated test gates alone are not enough.
+Coding agents are good at writing code. They are weak at:
 
-**Integration gate.** All tasks `done` ≠ workstream closed. Record worktree path/branch, pass human smoke (or explicit waive), then choose merge / PR / keep / prune — no silent orphan worktrees.
+- **Continuity** — losing the thread between chats, tools, and weekends
+- **Accountability** — marking work `done` without evidence
+- **Scope control** — drifting off-plan or skipping task accounting
 
-**Handoff over chat archaeology.** Resume from a bounded `## Handoff` block — not from scrolling yesterday’s transcript.
+Frameworks that *own the whole process* (GSD, BMAD, Spec-Kit, issue-tracker agents) can help — but they also take away control and make process bugs hard to fix.
 
-**Unattended with hard stops.** `/run auto` keeps ready tasks moving. Design gates require dual-agent consensus with a recorded verdict (no idle “please confirm”). Only irreversible git, true product forks, and true ambiguity hard-stop.
+`/run` keeps **you** in charge: plain files, explicit phases, hard stops where it matters.
 
-**Session sticky.** Follow-ups stay inside `/run` on an **active** workstream. Closed lines are not reopened for backfill — `/run new` (or bind another active workstream) instead. No silent fall-back to ad-hoc coding.
+## Key features
 
----
+- **Three-layer model** — project → workstream → tasks (`tasks.md` rows)
+- **Session sticky** — bound repos must stay on `/run`; no silent ad-hoc coding
+- **Single writer** — only parent `/run` updates workspace state; subagents may edit code (prefer worktrees)
+- **Verification gate** — `doing → done` requires evidence in the execution log
+- **Integration gate** — all tasks `done` ≠ workstream closed; human smoke + worktree disposition required
+- **Handoff block** — resume from `## Handoff` in `context.md`, not chat archaeology
+- **`/run auto`** — unattended advance with dual-agent design gates and real hard stops
+- **`/run review`** — protocol retro over workspace artifacts; bundled **`up`** skill patches the protocol
 
-## Install
+## Quick start
 
-Primary (same as [skills.sh](https://skills.sh) / matt / vercel packs):
+### 1. Install
 
 ```bash
 npx skills add kl7sn/run -g
 ```
 
-That installs packaged **`run`** + **`up`** into your agent skill directories. Useful flags:
+Installs **`run`** + **`up`**. Common flags:
 
 ```bash
 npx skills add kl7sn/run -g -y              # non-interactive
 npx skills add kl7sn/run -g -a cursor       # Cursor only
-npx skills add kl7sn/run --list             # preview skills in the repo
-npx skills update                           # refresh installed skills later
+npx skills add kl7sn/run --list             # preview packaged skills
+npx skills update                           # refresh later
 ```
 
-Browse / badge: [skills.sh/kl7sn/run](https://skills.sh/kl7sn/run)
+Contributors with a clone: `./install.sh all` (symlink into agent dirs).
 
-### Optional: clone for contributors
+### 2. Create a workstream
 
-```bash
-git clone https://github.com/kl7sn/run.git
-cd run
-./install.sh all    # symlink run+up into cursor/claude/codex/agents
-```
-
-Then in a repo: `/run init` → `/run new` → `/run`.
-
----
-
-## Workspace
-
-State lives in a normal directory. Obsidian is optional.
-
-**Resolution order**
-
-1. `workspace:` in the repo’s `.run-state`
-2. `RUN_WORKSPACE`
-3. `~/run-workspace`
+In your project repo:
 
 ```text
-~/run-workspace/
-└── Projects/
-    └── 01-demo/                 # project  NN-<slug>
-        ├── project.md
-        └── 01.01-hello/         # workstream  NN.MM-<slug>
-            ├── workstream.md
-            ├── tasks.md
-            ├── context.md       # Handoff · Gotchas · decisions · evidence
-            └── spec.md          # optional
+/run init demo          # project container (once)
+/run new hello          # nested workstream under the project
 ```
 
-Minimal sample: [`examples/01-demo/`](examples/01-demo/).  
-Templates: [`templates/`](templates/) (`*.md` English, `*.zh.md` Chinese). Set language with `/run lang en|zh`.
+Or point `RUN_WORKSPACE` / `.run-state` at an existing workspace folder.
 
----
+### 3. Run
 
-## Commands
+```text
+/run                    # advance explore → plan → execute
+/run auto               # unattended (hard stops still apply)
+/run review             # retro current project + maintain skills via up
+```
 
-| | |
-| --- | --- |
-| `/run init` | Create the project container |
-| `/run new` | Nest a workstream under the project |
-| `/run bind` | Rebind this session interactively |
-| `/run lang` [en\|zh] | Show or set document language |
-| `/run` | Advance explore → plan → execute |
-| `/run auto` | Unattended advance |
-
-Status line (every advancing reply):
+Status line on every advancing reply:
 
 ```text
 [/run · lang=en · auto=off · 01-demo/01.01-hello · T01 ready]
 ```
 
-Repo index (git root):
+## Packaged skills
+
+| Skill | Role |
+| --- | --- |
+| [`run`](skills/run/SKILL.md) | Process protocol — bind, phases, tasks, Handoff, gates |
+| [`up`](skills/up/SKILL.md) | Skill maintenance — phase 2 of `/run review` (default apply) |
+
+`/run` is **not** a general skill toolkit. Other skills (TDD, grilling, domain tools) stay separate and optional.
+
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `/run init` [projectId] | Create project container |
+| `/run new` [workstreamId] | Create nested workstream |
+| `/run bind` | Rebind this session interactively |
+| `/run lang` [en\|zh] | Show or set document language |
+| `/run` | Advance current phase |
+| `/run auto` | Unattended advance |
+| `/run review` [scope] | Protocol retro (default: current project) + `up` |
+| `/run review scan-only` | Report only; skip skill patches |
+
+## Workspace
+
+Resolution order: `.run-state` → `RUN_WORKSPACE` → `~/run-workspace`.
+
+```text
+<workspace>/
+└── Projects/
+    └── 01-demo/                    # project  NN-<slug>
+        ├── project.md
+        └── 01.01-hello/            # workstream  NN.MM-<slug>
+            ├── workstream.md
+            ├── tasks.md
+            ├── context.md          # Handoff · Gotchas · evidence
+            └── spec.md             # optional
+```
+
+Review reports: `Projects/<projectId>/_run-review/YYYY-MM-DD-review.md`
+
+Sample: [`examples/01-demo/`](examples/01-demo/) · Templates: [`templates/`](templates/) (`*.zh.md` for Chinese)
+
+Repo session index (`.run-state` at git root):
 
 ```yaml
-workspace: ~/run-workspace
+workspace: ~/run-workspace/Projects/01-demo/01.01-hello
 lang: en
 project: 01.01-hello
 repo: .
 ```
 
----
+## Supported agents
 
-## Companion skills
+| Agent | Install target |
+| --- | --- |
+| Cursor | `~/.cursor/skills/` |
+| Claude Code | `~/.claude/skills/` |
+| Codex | `~/.codex/skills/` |
 
-`/run` orchestrates. Phase skills stay optional and composable:
+Use `npx skills add kl7sn/run -g -a <agent>` to pick one. The `install.sh` helper also covers `~/.agents/skills/`.
 
-- **Defaults:** local superpowers (`brainstorming`, `writing-plans`, TDD, debugging, `verification-before-completion`)
-- **Optional cherry-picks:** [mattpocock/skills](https://github.com/mattpocock/skills) — e.g. `grill-with-docs`, `to-tickets`, `code-review`
-- **Bundled:** [`skills/up`](skills/up/SKILL.md) — `/run review` skill maintenance (not a general toolkit)
+## What /run is not
 
-Phase mapping lives in [`skills/run/SKILL.md`](skills/run/SKILL.md) → Relationship to other skills.
+| | |
+| --- | --- |
+| ❌ Hosted agent platform | ✅ Markdown workspace + skill protocol |
+| ❌ Issue tracker you must live in | ✅ `tasks.md` rows you can grep |
+| ❌ General skill hub / registry | ✅ Process assistant + bundled `up` only |
+| ❌ "Looks good" completion | ✅ Verification + human smoke before close |
 
----
+## Optional companions
 
-## Protocol depth
+`/run` orchestrates; phase discipline skills are optional:
 
-The README is the front door. The skill is the law.
+- **Defaults:** superpowers (`brainstorming`, `writing-plans`, TDD, `verification-before-completion`)
+- **Cherry-picks:** [mattpocock/skills](https://github.com/mattpocock/skills) — e.g. `grill-with-docs`, `to-tickets`, `code-review`
+- **Do not** dual-run their `handoff` / `implement` or move durable state out of the workspace
 
-| Document | Role |
+See [`skills/run/SKILL.md`](skills/run/SKILL.md) → *Relationship to other skills*.
+
+## Documentation
+
+| Document | Purpose |
 | --- | --- |
 | [`skills/run/SKILL.md`](skills/run/SKILL.md) | Full agent protocol |
-| [`skills/up/SKILL.md`](skills/up/SKILL.md) | Skill maintenance (`/run review` phase 2) |
-| [`docs/design.md`](docs/design.md) | Design notes & tradeoffs |
+| [`skills/up/SKILL.md`](skills/up/SKILL.md) | Skill maintenance skill |
+| [`docs/design.md`](docs/design.md) | Design notes and tradeoffs |
 | [`README_CN.md`](README_CN.md) | 中文说明 |
-
----
 
 ## License
 
-[MIT](LICENSE) · [kl7sn/run](https://github.com/kl7sn/run)
+[MIT](LICENSE)
