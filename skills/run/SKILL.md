@@ -68,7 +68,8 @@ Do **not** use the “concepts-only” exemption when the discussion changes arc
 | `/run new` [workstreamId] | Create nested **workstream** under parent (layer 2); stop by default (no auto execute) |
 | `/run bind` | Interactively rebind this session to a workstream / project / new |
 | `/run lang` [en\|zh] | Show or set **document language** for durable state + human-facing replies |
-| `/run review` [window] | **Read-only retro**: scan workspace artifacts for protocol violations and improvement candidates |
+| `/run review` [window] | **Retro + maintain**: scan workspace artifacts → report → **`up` phase** patches skills (default) |
+| `/run review scan-only` [window] | **Scan only**: report findings; no skill edits |
 | `/run` | Advance explore/plan/execute/recover; auto-continue when ready |
 | `/run auto` | **Unattended**: keep ready tasks flowing; design confirmation → dual-agent consensus then continue; true hard blocks stop |
 
@@ -274,7 +275,8 @@ After choice → write `.run-state` (top-level + `projects[]`) → continue. Inf
    - `/run new` → new workstream protocol
    - `/run bind` → interactive bind, then stop or continue
    - `/run lang` → document language protocol (show or set `en`/`zh`)
-   - `/run review` → retro protocol (read-only; stop after report unless user asks to fix)
+   - `/run review` → retro protocol (scan → report → **`up` maintenance** by default)
+   - `/run review scan-only` → retro scan + report only (no skill edits)
    - `/run auto` → recover bind, enter Auto mode, advance
 3. Resolve `lang` (see Document language) and keep it for this turn’s durable writes + human-facing prose
 4. If `projects[]` matches `session_id` → use it and sync top-level entry
@@ -783,24 +785,35 @@ If a project already exists and user says init → use `/run new`.
    - Confirm with status line `lang=…`
 4. Invalid value → ask `en` or `zh`; do not guess
 
-## Review protocol (`/run review` — read-only retro)
+## Review protocol (`/run review` — retro + integrated `up`)
 
-**Purpose:** evaluate whether `/run` protocol held up over a time window, using **bounded durable artifacts only** — not full agent chat transcripts. Output is a human-facing improvement backlog for skill/protocol edits. **Does not** auto-modify `SKILL.md`, workspace state, or code unless the user explicitly asks after reading the report.
+**Purpose:** evaluate whether `/run` protocol held up over a time window, using **bounded durable artifacts only** — not full agent chat transcripts. Default flow is **two phases**:
+
+1. **Scan + report** — heuristics R01–R10 → `Projects/_run-review/YYYY-MM-DD-review.md`
+2. **Maintain (`up`)** — apply skill patches from the report’s Skill backlog (follow personal **`up`** skill inline)
+
+**Does not** modify workstream state (`tasks.md`, Handoff), code repos, or `.run-state`. **Does** modify skill files in phase 2 unless `scan-only`.
+
+Standalone **`up`** remains valid for thread retros without a review report.
 
 ### Invocation
 
 ```text
-/run review              # default window: since yesterday (local calendar day)
+/run review              # default: scan + report + up (apply skill patches)
+/run review scan-only    # scan + report only; no skill edits
 /run review yesterday
 /run review 7d
 /run review 2026-08-20..2026-08-24
 /run review 01-shimocli/01.04-empty-paragraph-projection   # single workstream
 ```
 
+Aliases for scan-only: `scan-only`, `--scan-only`, `no-up`, `--no-up`.
+
 Status line prefix:
 
 ```text
-[/run · review · lang=en · workspace · 3 workstreams · 2 findings]
+[/run · review · up · lang=en · 3 workstreams · 2 findings · 1 patched]
+[/run · review · scan-only · lang=en · 3 workstreams · 2 findings]
 ```
 
 ### Data sources (authoritative)
@@ -872,14 +885,45 @@ Template:
 | workstream | last activity | open/closed | findings |
 |---|---|---|---|
 
-## Skill backlog (human triage)
+## Skill backlog
 
 - [ ] <action item → skills/run/SKILL.md section>
+
+## Maintenance applied (up)
+
+- mode: apply | skipped (scan-only) | none (empty backlog)
+- patched:
+  - skills/run/SKILL.md § <section> — <one line>
+- synced: cursor, codex, claude, agents
+- deferred:
+  - [ ] <item needing human triage or repo commit>
 ```
 
-Rules:
+### Phase 2: Skill maintenance (`up`)
 
-- **Read-only** this turn: no task claims, no Handoff edits, no auto skill commits
+Run **in the same turn** after the report is written, unless invocation was `scan-only`.
+
+Follow the personal **`up`** skill (`~/.codex/skills/up/SKILL.md` or synced copy). Inline checklist:
+
+1. Read **Findings** + **Skill backlog** from the report just written — not surrounding chat
+2. **Priority:** protocol findings (R01–R10) → patch `skills/run/SKILL.md` first; then other skills if backlog names them
+3. Apply **minimum** durable patches (facts, workflow rules, warnings — not conversation narrative)
+4. **Sync** shared skills to all roots: `~/.cursor/skills`, `~/.codex/skills`, `~/.claude/skills`, `~/.agents/skills`
+5. Append **Maintenance applied (up)** to the report file; update backlog checkboxes for items patched
+6. Reply with scannable summary: findings count, patches applied, sync roots, deferred items
+
+**Up phase rules:**
+
+- Workspace evidence in the report **wins** over chat recall
+- Do **not** auto git commit/push `kl7sn/run` unless the user explicitly asks
+- Skip patch when finding is ambiguous — list under `deferred` with reason
+- Empty Skill backlog → write `mode: none`; stop phase 2
+- Renames / new skills: follow `up` Automatic Rename Rule and Priority Rule
+
+### Rules (both phases)
+
+- **No execution** this turn: no task claims, no Handoff edits, no workstream code changes
+- Phase 1 always runs; phase 2 runs by default
 - Reply with scannable summary + path to report file
 - If zero workstreams in window → say so; suggest widening window or confirming workspace path
 - Repeat findings across reviews → bump priority in Summary
@@ -889,19 +933,7 @@ Rules:
 - `/run review` is **meta** — not a substitute for `/run` on an active line
 - Run from any repo with `.run-state`, or with `RUN_WORKSPACE` set
 - Safe to run in a **fresh session** (no workstream bind required)
-- After report, user decides: fix a specific workstream on next `/run`, or maintain skills (see **`up`** below)
-
-### Skill maintenance handoff (`up`)
-
-`/run review` **finds** protocol gaps; it does **not** edit `skills/run/SKILL.md`.
-
-To land improvements:
-
-1. Read `Projects/_run-review/YYYY-MM-DD-review.md` → **Skill backlog** section
-2. Invoke the personal **`up`** skill with that report (or paste findings)
-3. `up` applies patches: prefer strengthening `skills/run/SKILL.md` first; sync `~/.cursor/skills/run` + `~/.codex/skills/run` + `~/.claude/skills/run` after changes
-
-For protocol findings (R01–R10), treat workspace evidence in the review report as authoritative over chat narrative.
+- Workstream fixes from findings → next `/run` on the affected line (review does not reopen closed workstreams)
 
 ## Recover protocol
 
@@ -1037,9 +1069,11 @@ Composable engineering skills. **Cherry-pick 2–3**; do **not** install the who
 
 | When | Skill | Role |
 |---|---|---|
-| After `/run review` or a finished thread | `up` | Turn durable findings into skill patches (prefer existing skills; sync Cursor/Codex/Claude roots) |
+| **`/run review` (default)** | `up` (phase 2, inline) | Apply patches from report Skill backlog; sync skill roots |
+| `/run review scan-only` | — | Findings only; run `up` manually later if needed |
+| Finished thread without review | `up` (standalone) | Thread retro → skill patches when no review report exists |
 
-Recommended loop: **`/run review` → read report → `up` → patch `skills/run/SKILL.md`**. `up` does not replace `/run review` heuristics and does not advance workstreams.
+Default loop: **`/run review` = scan → report → up`**. `up` does not replace review heuristics and does not advance workstreams.
 
 
 `/run` supports **`en`** and **`zh`** for durable-state prose and human-facing replies. Machine literals stay English.

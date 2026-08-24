@@ -52,4 +52,4 @@ Public summary of the workflow. Full rules live in `skills/run/SKILL.md`.
 
 ## Review (`/run review`)
 
-Read-only retro over workspace + `.run-state` (not chat transcripts). Heuristic findings → `Projects/_run-review/YYYY-MM-DD-review.md`. **Land skill changes with personal `up` skill** — review finds, `up` patches.
+Retro over workspace + `.run-state` (not chat transcripts). Heuristic findings → `Projects/_run-review/YYYY-MM-DD-review.md`. **Default: integrated `up` phase** patches skills from the report Skill backlog; `scan-only` skips edits. No workstream/code changes.
