@@ -147,6 +147,7 @@ README 是门面。Skill 才是完整法则。
 | 文档 | 作用 |
 | --- | --- |
 | [`skills/run/SKILL.md`](skills/run/SKILL.md) | 完整 Agent 协议（英文） |
+| [`skills/up/SKILL.md`](skills/up/SKILL.md) | Skill 维护（`/run review` 第二阶段） |
 | [`docs/design.md`](docs/design.md) | 设计说明与取舍 |
 | [`README.md`](README.md) | English |
 

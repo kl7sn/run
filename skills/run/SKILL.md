@@ -793,7 +793,7 @@ If a project already exists and user says init → use `/run new`.
 **Purpose:** evaluate whether `/run` protocol held up over a time window, using **bounded durable artifacts only** — not full agent chat transcripts. Default flow is **two phases**:
 
 1. **Scan + report** — heuristics R01–R10 → `Projects/<projectId>/_run-review/YYYY-MM-DD-review.md`
-2. **Maintain (`up`)** — apply skill patches from the report’s Skill backlog (follow personal **`up`** skill inline)
+2. **Maintain (`up`)** — apply skill patches from the report’s Skill backlog (follow packaged **`skills/up`** inline)
 
 **Does not** modify workstream state (`tasks.md`, Handoff), code repos, or `.run-state`. **Does** modify skill files in phase 2 unless `scan-only`.
 
@@ -940,7 +940,7 @@ Run **in the same turn** after report(s) are written, unless invocation was `sca
 
 When `scope=all` produced multiple project reports, merge **Skill backlog** items from all reports written this turn, then run one `up` pass (append **Maintenance applied** to each report touched).
 
-Follow the personal **`up`** skill (`~/.codex/skills/up/SKILL.md` or synced copy). Inline checklist:
+Follow the packaged **`up`** skill at `skills/up/SKILL.md` (same repo as `/run`; installed via `install.sh`). Inline checklist:
 
 1. Read **Findings** + **Skill backlog** from the report just written — not surrounding chat
 2. **Priority:** protocol findings (R01–R10) → patch `skills/run/SKILL.md` first; then other skills if backlog names them
@@ -1106,13 +1106,15 @@ Composable engineering skills. **Cherry-pick 2–3**; do **not** install the who
 
 ### Meta maintenance (`up`)
 
+`up` is **shipped with this package** (`skills/up`) and maintained in the same repo as `/run`. It is the only bundled companion besides the process protocol itself — not a general skill toolkit.
+
 | When | Skill | Role |
 |---|---|---|
 | **`/run review` (default)** | `up` (phase 2, inline) | Apply patches from report Skill backlog; sync skill roots |
 | `/run review scan-only` | — | Findings only; run `up` manually later if needed |
 | Finished thread without review | `up` (standalone) | Thread retro → skill patches when no review report exists |
 
-Default loop: **`/run review` = scan → report → up`**. `up` does not replace review heuristics and does not advance workstreams.
+Default loop: **`/run review` = scan → report → up`**. Prefer editing `skills/up` and `skills/run` in the `kl7sn/run` checkout, then `./install.sh all`. `up` does not replace review heuristics and does not advance workstreams.
 
 
 `/run` supports **`en`** and **`zh`** for durable-state prose and human-facing replies. Machine literals stay English.

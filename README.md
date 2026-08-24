@@ -71,15 +71,23 @@ git clone https://github.com/kl7sn/run.git
 cd run
 ```
 
-Symlink the skill into your agent:
+Symlink both packaged skills into your agent:
 
 | Agent | Command |
 | --- | --- |
-| **Cursor** | `ln -sf "$(pwd)/skills/run" ~/.cursor/skills/run` |
-| **Claude Code** | `ln -sf "$(pwd)/skills/run" ~/.claude/skills/run` |
-| **Codex** | `ln -sf "$(pwd)/skills/run" ~/.codex/skills/run` |
+| **Cursor** | `./install.sh cursor` |
+| **Claude Code** | `./install.sh claude` |
+| **Codex** | `./install.sh codex` |
+| **All (+ `.agents`)** | `./install.sh all` |
 
-Or use [`install.sh`](install.sh).
+Manual equivalent:
+
+```bash
+ln -sfn "$(pwd)/skills/run" ~/.cursor/skills/run
+ln -sfn "$(pwd)/skills/up"  ~/.cursor/skills/up
+```
+
+Installs **`run`** (process) and **`up`** (skill maintenance for `/run review`).
 
 Then in a repo: `/run init` → `/run new` → `/run`.
 
@@ -146,7 +154,7 @@ repo: .
 
 - **Defaults:** local superpowers (`brainstorming`, `writing-plans`, TDD, debugging, `verification-before-completion`)
 - **Optional cherry-picks:** [mattpocock/skills](https://github.com/mattpocock/skills) — e.g. `grill-with-docs`, `to-tickets`, `code-review`
-- **Do not** dual-run their `handoff` / `implement`, or install the whole pack if it duplicates what you already have
+- **Bundled:** [`skills/up`](skills/up/SKILL.md) — `/run review` skill maintenance (not a general toolkit)
 
 Phase mapping lives in [`skills/run/SKILL.md`](skills/run/SKILL.md) → Relationship to other skills.
 
@@ -159,6 +167,7 @@ The README is the front door. The skill is the law.
 | Document | Role |
 | --- | --- |
 | [`skills/run/SKILL.md`](skills/run/SKILL.md) | Full agent protocol |
+| [`skills/up/SKILL.md`](skills/up/SKILL.md) | Skill maintenance (`/run review` phase 2) |
 | [`docs/design.md`](docs/design.md) | Design notes & tradeoffs |
 | [`README_CN.md`](README_CN.md) | 中文说明 |
 

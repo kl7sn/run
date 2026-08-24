@@ -1,24 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-install_one() {
-  local dest="$1"
+
+install_skill() {
+  local name="$1"
+  local dest="$2"
   mkdir -p "$(dirname "$dest")"
   rm -rf "$dest"
-  ln -s "$ROOT/skills/run" "$dest"
-  echo "linked $dest -> $ROOT/skills/run"
+  ln -sfn "$ROOT/skills/$name" "$dest"
+  echo "linked $dest -> $ROOT/skills/$name"
 }
+
+install_agent() {
+  local base="$1"
+  install_skill run "$base/run"
+  install_skill up "$base/up"
+}
+
 case "${1:-}" in
-  cursor) install_one "$HOME/.cursor/skills/run" ;;
-  claude) install_one "$HOME/.claude/skills/run" ;;
-  codex)  install_one "$HOME/.codex/skills/run" ;;
+  cursor)
+    install_agent "$HOME/.cursor/skills"
+    ;;
+  claude)
+    install_agent "$HOME/.claude/skills"
+    ;;
+  codex)
+    install_agent "$HOME/.codex/skills"
+    ;;
+  agents)
+    install_agent "$HOME/.agents/skills"
+    ;;
   all)
-    install_one "$HOME/.cursor/skills/run"
-    install_one "$HOME/.claude/skills/run"
-    install_one "$HOME/.codex/skills/run"
+    install_agent "$HOME/.cursor/skills"
+    install_agent "$HOME/.claude/skills"
+    install_agent "$HOME/.codex/skills"
+    install_agent "$HOME/.agents/skills"
     ;;
   *)
-    echo "Usage: $0 {cursor|claude|codex|all}"
+    echo "Usage: $0 {cursor|claude|codex|agents|all}"
+    echo "Installs skills/run and skills/up as symlinks into the agent skills directory."
     exit 1
     ;;
 esac
