@@ -75,11 +75,19 @@ cd run
 
 | Agent | 命令 |
 | --- | --- |
-| **Cursor** | `ln -sf "$(pwd)/skills/run" ~/.cursor/skills/run` |
-| **Claude Code** | `ln -sf "$(pwd)/skills/run" ~/.claude/skills/run` |
-| **Codex** | `ln -sf "$(pwd)/skills/run" ~/.codex/skills/run` |
+| **Cursor** | `./install.sh cursor` |
+| **Claude Code** | `./install.sh claude` |
+| **Codex** | `./install.sh codex` |
+| **全部（含 `.agents`）** | `./install.sh all` |
 
-或使用 [`install.sh`](install.sh)。
+手动等价：
+
+```bash
+ln -sfn "$(pwd)/skills/run" ~/.cursor/skills/run
+ln -sfn "$(pwd)/skills/up"  ~/.cursor/skills/up
+```
+
+安装 **`run`**（流程）与 **`up`**（`/run review` 的 skill 维护）。或使用 [`install.sh`](install.sh)。
 
 然后在仓库里：`/run init` → `/run new` → `/run`。
 
