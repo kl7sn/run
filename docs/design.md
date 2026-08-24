@@ -50,6 +50,14 @@ Public summary of the workflow. Full rules live in `skills/run/SKILL.md`.
 
 `status: closed` ends the workstream. New durable work must **not** reopen it — `/run new` under the parent (or bind another active line). Binding a closed line while needing tasks/decisions/code is an abnormal bind / hard block.
 
+## Comparison
+
+Full table: [README § Comparison](../README.md#comparison). Summary:
+
+- **ai-memory** — cross-session capture & handoff injection; `/run` — explicit tasks, verification, workstream close rules. Often used together.
+- **mattpocock/skills** — composable phase toolbox; `/run` owns workspace orchestration. Cherry-pick only; no dual `handoff`/`implement`.
+- **GSD / BMAD / Spec-Kit** — own the pipeline; `/run` stays a small Markdown + skill protocol with visible hard stops.
+
 ## Companion skills
 
 `/run` orchestrates; it does not replace phase disciplines. Default to local superpowers (`brainstorming`, `writing-plans`, `tdd`, `systematic-debugging`, `verification-before-completion`). Optionally cherry-pick from [mattpocock/skills](https://github.com/mattpocock/skills) (`grill-with-docs`, `to-tickets`, `code-review`) — never dual-run their `handoff`/`implement` or a full pack that moves durable state out of the workspace.
